@@ -34,8 +34,8 @@ cxapp_vault <- function() {
   if ( base::toupper(vaultsvc) == "LOCAL" )
     return(invisible( cxapp:::.cxapp_vaultlocal() ))
     
-  # if ( base::toupper(vaultsvc) == "AZUREKV" )
-  #   return(invisible( cxapp:::.cxapp_vaultazurekv() ))
+  if ( base::toupper(vaultsvc) == "AZUREKV" )
+    return(invisible( cxapp:::.cxapp_vaultazurekv() ))
   
   
   stop( "Vault service ", base::toupper(vaultsvc), " is not supported" )

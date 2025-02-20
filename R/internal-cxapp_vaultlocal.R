@@ -27,10 +27,6 @@
 #' secret is not defined, the value of `unset` is returned. A secret is stored and
 #' returned as a single text value.
 #' 
-#' A secret is an R object saved using the \link[base]{save} function and returned
-#' using the \link[base]{load} function.
-#'
-#' 
 #' @keywords internal
 
 
