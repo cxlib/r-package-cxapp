@@ -1,0 +1,13 @@
+Package: cxapp
+Title: A utility package for developing R based Shiny, plumber and other applications and services
+Version: 0.0.0.9000
+Authors@R: 
+        person("Magnus", "Mengelbier", , "magnus.mengelbier@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8673-7625"))
+Imports: base, utils, methods
+Suggests: testthat (>= 3.0.0)
+Description: A utility package for developing R based Shiny, plumber and other applications and services in Life Science GxP and regulated environments.
+License: Apache License (== 2.0)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
