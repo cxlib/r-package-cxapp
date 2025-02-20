@@ -9,7 +9,7 @@
 #' 
 #' The Azure Key Vault is not hierarchical but can use a path notation with 
 #' forward slash as separator to represent a crude hierarchy. The forward 
-#' slashes are translated to underscores mimicing a hierarchical reference 
+#' slashes are translated to underscores mimicking a hierarchical reference 
 #' structure.
 #' 
 #' The levels of the hierarchy and the secret name consists of the characters
@@ -20,7 +20,7 @@
 #' The Azure Key Vault service is enabled by setting the cxapp property `VAULT` to
 #' the value `AZUREKV`.
 #' 
-#' The cxapp properrt `AZUREKV.URL` defines the Azure Key Vault connection URL. 
+#' The cxapp property `AZUREKV.URL` defines the Azure Key Vault connection URL. 
 #' 
 #' The following properties are used to connect and retrieve a temporary access 
 #' token. All are required.
@@ -83,12 +83,15 @@
   
   oauth_config <- character(0)
   
-  for ( cfg_property in c( "AZUREKV.OAUTH.URL", "AZUREKV.OAUTH.CLIENTID", "AZUREKV.OAUTH.CLIENTSECRET", "AZUREKV.OAUTH.SCOPE" ) )
+  for ( cfg_property in c( "AZUREKV.OAUTH.URL", "AZUREKV.OAUTH.CLIENTID", "AZUREKV.OAUTH.CLIENTSECRET", "AZUREKV.OAUTH.SCOPE" ) ) {
+    
+    if ( is.na(cfg$option( cfg_property, unset = NA )) )
+      stop( "Required Azure Key Vault property ", cfg_property, " not defined" )
+
     oauth_config[ cfg_property ] <- cfg$option( cfg_property, unset = NA )
-  
-  if ( any(is.na(oauth_config)) )
-    stop( "One or more required Azure Key Vault properties not defined" )
-  
+    
+  }
+
   
   # -- get temporary access token 
   

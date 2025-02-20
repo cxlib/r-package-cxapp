@@ -14,6 +14,9 @@
 #' A local vault can be enabled with `VAULT` equal to \code{LOCAL}. See 
 #' \link{.cxapp_vaultlocal} for configuration options.
 #' 
+#' A connection to Azure Key Vault can be enabled with `VAULT` equal to
+#' \code{AZUREKV}. See \link{.cxapp_vaultazurekv} for configuration options.
+#' 
 #' @export
 
 
