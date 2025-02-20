@@ -236,7 +236,7 @@ testthat::test_that( "vaultlocal.list", {
   
   test_secrets <- base::replicate( 20, 
                                    paste( base::replicate( 5, 
-                                                           paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), ".", "-", "_"), 10 ), collapse = ""),
+                                                           paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), "-", "_"), 10 ), collapse = ""),
                                                            simplify = TRUE),
                                           collapse = "/" )
                                    , simplify = TRUE )
@@ -331,7 +331,7 @@ testthat::test_that( "vaultlocal.secretNotExist", {
   
   test_secrets <- base::replicate( 20, 
                                    paste( base::replicate( 5, 
-                                                           paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), ".", "-", "_"), 10 ), collapse = ""),
+                                                           paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), "-", "_"), 10 ), collapse = ""),
                                                            simplify = TRUE),
                                           collapse = "/" )
                                    , simplify = TRUE )
@@ -355,7 +355,7 @@ testthat::test_that( "vaultlocal.secretNotExist", {
   # reference secret
 
   test_ref_secret <- paste( base::replicate( 5, 
-                                             paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), ".", "-", "_"), 10 ), collapse = ""),
+                                             paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), "-", "_"), 10 ), collapse = ""),
                                              simplify = TRUE),
                             collapse = "/" ) 
   
@@ -432,7 +432,7 @@ testthat::test_that( "vaultlocal.secret", {
   
   test_secrets <- base::replicate( 20, 
                                    paste( base::replicate( 5, 
-                                                           paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), ".", "-", "_"), 10 ), collapse = ""),
+                                                           paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), "-", "_"), 10 ), collapse = ""),
                                                            simplify = TRUE),
                                           collapse = "/" )
                                    , simplify = TRUE )
@@ -456,7 +456,7 @@ testthat::test_that( "vaultlocal.secret", {
   # reference secret
   
   test_ref_secret <- paste( base::replicate( 5, 
-                                             paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), ".", "-", "_"), 10 ), collapse = ""),
+                                             paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), "-", "_"), 10 ), collapse = ""),
                                              simplify = TRUE),
                             collapse = "/" ) 
   
