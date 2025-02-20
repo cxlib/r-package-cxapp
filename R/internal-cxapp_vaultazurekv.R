@@ -83,12 +83,15 @@
   
   oauth_config <- character(0)
   
-  for ( cfg_property in c( "AZUREKV.OAUTH.URL", "AZUREKV.OAUTH.CLIENTID", "AZUREKV.OAUTH.CLIENTSECRET", "AZUREKV.OAUTH.SCOPE" ) )
+  for ( cfg_property in c( "AZUREKV.OAUTH.URL", "AZUREKV.OAUTH.CLIENTID", "AZUREKV.OAUTH.CLIENTSECRET", "AZUREKV.OAUTH.SCOPE" ) ) {
+    
+    if ( is.na(cfg$option( cfg_property, unset = NA )) )
+      stop( "Required Azure Key Vault property ", cfg_property, " not defined" )
+
     oauth_config[ cfg_property ] <- cfg$option( cfg_property, unset = NA )
-  
-  if ( any(is.na(oauth_config)) )
-    stop( "One or more required Azure Key Vault properties not defined" )
-  
+    
+  }
+
   
   # -- get temporary access token 
   
