@@ -20,4 +20,7 @@ is not defined, the request results in an error.
 
 A local vault can be enabled with \code{VAULT} equal to \code{LOCAL}. See
 \link{.cxapp_vaultlocal} for configuration options.
+
+A connection to Azure Key Vault can be enabled with \code{VAULT} equal to
+\code{AZUREKV}. See \link{.cxapp_vaultazurekv} for configuration options.
 }

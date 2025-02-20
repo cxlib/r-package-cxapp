@@ -10,7 +10,7 @@ An internal utility class representing a connection to an Azure Key Vault
 
 The Azure Key Vault is not hierarchical but can use a path notation with
 forward slash as separator to represent a crude hierarchy. The forward
-slashes are translated to underscores mimicing a hierarchical reference
+slashes are translated to underscores mimicking a hierarchical reference
 structure.
 
 The levels of the hierarchy and the secret name consists of the characters
@@ -21,7 +21,7 @@ The Azure Key Vault relies on multiple cxapp properties.
 The Azure Key Vault service is enabled by setting the cxapp property \code{VAULT} to
 the value \code{AZUREKV}.
 
-The cxapp properrt \code{AZUREKV.URL} defines the Azure Key Vault connection URL.
+The cxapp property \code{AZUREKV.URL} defines the Azure Key Vault connection URL.
 
 The following properties are used to connect and retrieve a temporary access
 token. All are required.
