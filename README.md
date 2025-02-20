@@ -75,6 +75,29 @@ See help for `cxapp::cxapp_config()` for further details.
 
 <br/>
 
+## Logs
+The cxapp package includes a simple logging utility.
+
+The log directory is specified by the cxapp property `LOG.PATH`.
+
+The root of the log file name can be customized using the cxapp property
+`LOG.NAME`. If the log name is not specified, the default name is `app.log`.
+
+A simple form of automated rotation of logs can defined using the `LOG.ROTATION`
+cxapp property. A property value of 
+* `YEAR` enables annual rotation and results in the log file name `<name>-yyyy.log`
+* `MONTH` enables monthly rotation and results in the log file name `<name>-yyyymm.log`
+* `DAY` enables daily rotation and results in the log file name `<name>-yyyymmdd.log`
+
+Log entries in the log file are prefixed by the date and time of when the log entry was
+created/appended. 
+
+All log references to date and time is in UTC format.
+
+See help for `cxapp::cxapp_log()` for further details.
+
+<br/>
+
 ## App Paths
 The cxapp package provides simple functions for app paths.
 
