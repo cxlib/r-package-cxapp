@@ -46,7 +46,7 @@ testthat::test_that( "propread.NADefaults", {
 testthat::test_that( "propread.fileNotExist", {
   
   # - stage
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
   
   if ( ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail( "Could not stage test root" )
@@ -73,7 +73,7 @@ testthat::test_that( "propread.fileNotExist", {
 testthat::test_that( "propread.simpleCase", {
   
   # - stage
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
   
   if ( ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail( "Could not stage test root" )
@@ -109,7 +109,7 @@ testthat::test_that( "propread.simpleCase", {
 testthat::test_that( "propread.simpleCaseComment", {
   
   # - stage
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
   
   if ( ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail( "Could not stage test root" )

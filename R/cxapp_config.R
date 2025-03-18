@@ -29,7 +29,7 @@
 #' The `option()` method returns the value of an option if it exists or the value
 #' of `unset` if the option does not exist. An option is referred to by the string
 #' `<context>/<property>`. If the context is specified, the context is assumed
-#' to be `cxapp`.
+#' to be `app`.
 #' 
 #' If the option is not defined as part of a property file, the `option()` method
 #' searches for an environment variable `<context>_<property>`. Any periods in
@@ -69,15 +69,60 @@ cxapp_config$methods( "initialize" = function( x ) {
   # -- property files to load
   prop_files <- character(0)
   
+
+  # - search tree for app.properties
+  srch_tree <- character(0)
+
   
-  # -- add first occurrence of cxapp.properties found in .libPaths()
-  srch_paths <- base::file.path( cxapp:::.cxapp_standardpath(.libPaths()), 
-                                 "cxapp",
-                                 "cxapp.properties", 
-                                 fsep = "/" )
+  # - current working directory
+  srch_tree <- append( srch_tree, cxapp::cxapp_standardpath( base::getwd() ) )
   
-  if ( any(file.exists( srch_paths )) )
-    prop_files[ "cxapp.properties" ] <- utils::head( srch_paths[ base::file.exists( srch_paths) ], n = 1 ) 
+  
+  # - APP_HOME environment
+  
+  app_home_config_propfiles <- character(0)
+  
+  if ( "APP_HOME" %in% base::toupper(names(Sys.getenv())) ) {
+
+    # case insensitive matching     
+    env_names <- names(Sys.getenv())
+    app_home <- cxapp::cxapp_standardpath( Sys.getenv( utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ] , n = 1 ) ) )
+    
+    srch_tree <- append( srch_tree, c( file.path( app_home, "config", fsep = "/" ), 
+                                       app_home ) )
+    
+    
+    app_home_config_propfiles <- list.files( file.path( app_home, "config", fsep = "/" ),
+                                             pattern = ".properties$", 
+                                             full.names = TRUE, 
+                                             recursive = FALSE, 
+                                             include.dirs = FALSE )
+      
+  }
+  
+  
+  # - cxapp install directory in library tree
+  srch_tree <- append( srch_tree, file.path( cxapp::cxapp_standardpath(.libPaths()), "cxapp", fsep = "/" ) )
+  
+
+  # - add first occurrence to property files
+  
+  app_property_files <- file.path( srch_tree, "app.properties", fsep = "/" ) 
+  
+  if ( any(file.exists( app_property_files )) )
+    prop_files <- utils::head( app_property_files[ file.exists(app_property_files) ], n = 1 )
+    
+  
+
+  # 
+  # # -- add first occurrence of cxapp.properties found in .libPaths()
+  # srch_paths <- base::file.path( cxapp:::.cxapp_standardpath(.libPaths()), 
+  #                                "cxapp",
+  #                                "cxapp.properties", 
+  #                                fsep = "/" )
+  # 
+  # if ( any(file.exists( srch_paths )) )
+  #   prop_files[ "cxapp.properties" ] <- utils::head( srch_paths[ base::file.exists( srch_paths) ], n = 1 ) 
   
   
   if ( ! missing(x) && ! is.null(x) )
@@ -108,13 +153,17 @@ cxapp_config$methods( "initialize" = function( x ) {
     }
   
   
-  # <- register discovered property files 
-  .self$.attr[[".internal"]][["property.files"]] <- unname(prop_files)
-   
   
+  # - add app home config property files
+  #   note: this is a hack ... to back load app home config files that are not explicitly loaded
+  prop_files <- append( prop_files, app_home_config_propfiles )
+
+      
   # -- process property files
   
-  for ( xpath in .self$.attr[[".internal"]][["property.files"]] ) {
+  read_propfiles <- character(0)
+  
+  for ( xpath in prop_files ) {
 
     props <- cxapp::cxapp_propertiesread( xpath )
     names(props) <- base::tolower(names(props))
@@ -124,13 +173,22 @@ cxapp_config$methods( "initialize" = function( x ) {
     if ( ! grepl( "^[a-z0-9]+$", xcontext, perl = TRUE, ignore.case = TRUE ) )
       stop( "Invalid property file name" )
     
-        
+    
+    if ( xcontext %in% names(.self$.attr) )
+      next()
+    
+
     .self$.attr[[ xcontext ]] <-  props
+    
+    read_propfiles <- append( read_propfiles, xpath )
     
     base::rm( props )
   }
 
-    
+
+  # <- register discovered property files 
+  .self$.attr[[".internal"]][["property.files"]] <- read_propfiles
+  
   
 })
 
@@ -152,7 +210,7 @@ cxapp_config$methods( "option" = function( x, unset = NA, as.type = TRUE ) {
   # -- generate a standard set of references
   #    note: if context not specified, assume cxapp
   
-  opt_std <- base::tolower( ifelse( grepl( "/", x), x, paste("cxapp", x, sep = "/") ) )
+  opt_std <- base::tolower( ifelse( grepl( "/", x), x, paste("app", x, sep = "/") ) )
   
   opt_ref <- c( "property" = base::gsub( "/", ".", opt_std ),
                 "env" = base::gsub( "[\\-\\./]", "_", opt_std ) )

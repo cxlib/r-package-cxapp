@@ -20,7 +20,7 @@ testthat::test_that( "vaultazurekv.initNoVaultURL", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -50,10 +50,10 @@ testthat::test_that( "vaultazurekv.initNoVaultURL", {
   
   base::writeLines( c( "# test properties file",
                        "VAULT = AZUREKV" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test
@@ -70,7 +70,7 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthURL", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -101,10 +101,10 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthURL", {
   base::writeLines( c( "# test properties file",
                        "VAULT = AZUREKV",
                        "AZUREKV.URL = something" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test
@@ -119,7 +119,7 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthClientID", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -151,10 +151,10 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthClientID", {
                        "VAULT = AZUREKV",
                        "AZUREKV.URL = something", 
                        "AZUREKV.OAUTH.URL = anything"),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test
@@ -170,7 +170,7 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthClientSecret", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -203,10 +203,10 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthClientSecret", {
                        "AZUREKV.URL = something", 
                        "AZUREKV.OAUTH.URL = anything", 
                        "AZUREKV.OAUTH.CLIENTID = any"),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test
@@ -220,7 +220,7 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthScope", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -254,10 +254,10 @@ testthat::test_that( "vaultazurekv.initNoPropOAuthScope", {
                        "AZUREKV.OAUTH.URL = anything", 
                        "AZUREKV.OAUTH.CLIENTID = any", 
                        "AZUREKV.OAUTH.CLIENTSECRET = any" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test

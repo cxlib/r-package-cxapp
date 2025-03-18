@@ -39,7 +39,7 @@ testthat::test_that( "log.configLogPathNotExist", {
 
   # -- stage
 
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -62,7 +62,7 @@ testthat::test_that( "log.configLogPathNotExist", {
   
   # log directory
   
-  test_log_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
+  test_log_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
   
   if ( dir.exists( test_log_path ) || file.exists( test_log_path ) )
     testthat::fail( "Unexpected test log exists" )
@@ -76,10 +76,10 @@ testthat::test_that( "log.configLogPathNotExist", {
   
   base::writeLines( c( "# test properties file",
                        paste0( "LOG.PATH = ", test_log_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
 
   # messages 
@@ -106,7 +106,7 @@ testthat::test_that( "log.configLogPathExistDefaultLog", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -129,7 +129,7 @@ testthat::test_that( "log.configLogPathExistDefaultLog", {
   
   # log directory
   
-  test_log_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
+  test_log_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_log_path ) && ! dir.create( test_log_path, recursive = TRUE ) )
     testthat::fail("Could not create test log directory")
@@ -143,10 +143,10 @@ testthat::test_that( "log.configLogPathExistDefaultLog", {
   
   base::writeLines( c( "# test properties file",
                        paste0( "LOG.PATH = ", test_log_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # messages 
@@ -195,7 +195,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateYear", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -218,7 +218,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateYear", {
   
   # log directory
   
-  test_log_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
+  test_log_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_log_path ) && ! dir.create( test_log_path, recursive = TRUE ) )
     testthat::fail("Could not create test log directory")
@@ -233,10 +233,10 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateYear", {
   base::writeLines( c( "# test properties file",
                        paste0( "LOG.PATH = ", test_log_path ),
                        "LOG.ROTATION = year" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # messages 
@@ -288,7 +288,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateMonth", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -311,7 +311,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateMonth", {
   
   # log directory
   
-  test_log_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
+  test_log_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_log_path ) && ! dir.create( test_log_path, recursive = TRUE ) )
     testthat::fail("Could not create test log directory")
@@ -326,10 +326,10 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateMonth", {
   base::writeLines( c( "# test properties file",
                        paste0( "LOG.PATH = ", test_log_path ),
                        "LOG.ROTATION = month" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # messages 
@@ -381,7 +381,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateDay", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -404,7 +404,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateDay", {
   
   # log directory
   
-  test_log_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
+  test_log_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_log_path ) && ! dir.create( test_log_path, recursive = TRUE ) )
     testthat::fail("Could not create test log directory")
@@ -419,10 +419,10 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateDay", {
   base::writeLines( c( "# test properties file",
                        paste0( "LOG.PATH = ", test_log_path ),
                        "LOG.ROTATION = day" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # messages 
@@ -474,7 +474,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateInvalid", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -498,7 +498,7 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateInvalid", {
 
   # log directory
   
-  test_log_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
+  test_log_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-log-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_log_path ) && ! dir.create( test_log_path, recursive = TRUE ) )
     testthat::fail("Could not create test log directory")
@@ -516,10 +516,10 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateInvalid", {
   base::writeLines( c( "# test properties file",
                        paste0( "LOG.PATH = ", test_log_path ),
                        paste0( "LOG.ROTATION = ", test_invalid_rotate_ref ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # messages 

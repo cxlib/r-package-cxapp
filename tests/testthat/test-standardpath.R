@@ -1,5 +1,5 @@
 #
-#  tests for utility cxapp::.cxapp_standardpath()
+#  tests for utility cxapp::cxapp_standardpath()
 #
 #
 #
@@ -8,7 +8,7 @@
 testthat::test_that( "standardpath.noParms", {
   
   # -- test 
-  result <- cxapp:::.cxapp_standardpath() 
+  result <- cxapp::cxapp_standardpath() 
   
   # -- assertions
   testthat::expect_length( result, 0 )
@@ -21,7 +21,7 @@ testthat::test_that( "standardpath.noParms", {
 testthat::test_that( "standardpath.paramNull", {
   
   # -- test 
-  result <- cxapp:::.cxapp_standardpath( NULL ) 
+  result <- cxapp::cxapp_standardpath( NULL ) 
   
   # -- assertions
   testthat::expect_length( result, 0 )
@@ -35,7 +35,7 @@ testthat::test_that( "standardpath.paramNull", {
 testthat::test_that( "standardpath.paramNA", {
   
   # -- test 
-  result <- cxapp:::.cxapp_standardpath( NA ) 
+  result <- cxapp::cxapp_standardpath( NA ) 
 
   # -- assertions
   testthat::expect_true( is.na(result) )
@@ -50,7 +50,7 @@ testthat::test_that( "standardpath.paramSinglePathFsepSlash", {
   test_xpath <- "some/path/for/x"
     
   # -- test 
-  result <- cxapp:::.cxapp_standardpath( test_xpath ) 
+  result <- cxapp::cxapp_standardpath( test_xpath ) 
 
   # -- assertions
   testthat::expect_equal( result, test_xpath )
@@ -65,7 +65,7 @@ testthat::test_that( "standardpath.paramSinglePathFsepBackSlash", {
   test_xpath <- "some\\path\\for\\x"
   
   # -- test 
-  result <- cxapp:::.cxapp_standardpath( test_xpath ) 
+  result <- cxapp::cxapp_standardpath( test_xpath ) 
 
   # -- expected
   expected_xpath <- gsub( "\\\\", "/", test_xpath )
@@ -85,7 +85,7 @@ testthat::test_that( "standardpath.paramMultiplePaths", {
                     "\\root\to/some/path/here" )
   
   # -- test 
-  result <- cxapp:::.cxapp_standardpath( test_xpaths ) 
+  result <- cxapp::cxapp_standardpath( test_xpaths ) 
   
   # -- expected
   expected_xpaths <- gsub( "\\\\", "/", test_xpaths )

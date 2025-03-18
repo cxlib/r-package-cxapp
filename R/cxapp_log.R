@@ -62,7 +62,7 @@ cxapp_log <- function( x, echo = base::interactive() ) {
   
   # -- log file
 
-  log_dir <- cxapp:::.cxapp_standardpath( cfg$option( "LOG.PATH", as.type = FALSE ) )
+  log_dir <- cxapp::cxapp_standardpath( cfg$option( "LOG.PATH", as.type = FALSE ) )
   
   if ( ! dir.exists( log_dir ) )
     stop( "Log directory ", log_dir, " does not exist" )
