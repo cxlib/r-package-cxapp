@@ -1,6 +1,7 @@
 #' Simple function to log messages
 #' 
 #' @param x Vector of messages to log
+#' @param attr A vector of attribute values to append to log message
 #' @param echo Enable/Disable output of log messages to console
 #' 
 #' @returns Invisible vector of log messages
@@ -24,25 +25,38 @@
 #' 
 #' Log messages follow the convention `[%Y-%m-%d %H:%M:%S] <message>` 
 #' 
+#' Specified attribute values are appended to the log message between square 
+#' brackets delimited by semi-colon.
+#' 
 #' if executing in `interactive()` mode, log messages are written to the console.
 #' 
 #' 
 #' @export
 
 
-cxapp_log <- function( x, echo = base::interactive() ) {
+cxapp_log <- function( x, attr = NULL, echo = base::interactive() ) {
   
   
   # -- futility 
   if ( missing(x) || is.null(x) || all(is.na(x)) )
     return()
 
+  
+  # -- attributes
+  
+  attr_str <- ""
+  
+  if ( ! is.null(attr) )
+    attr_str <- paste0( "[", paste(unlist(as.character(attr), use.names = FALSE), collapse = ";"), "]" )
+  
+  
+  
   # -- init log message 
   init_msg <- format( base::as.POSIXlt( base::Sys.time(), tz = "UTC"), format = "[%Y-%m-%d %H:%M:%S] Log file created")
 
 
   # -- format messages
-  msgs <- paste( format( base::as.POSIXlt( base::Sys.time(), tz = "UTC"), format = "[%Y-%m-%d %H:%M:%S]"), x ,sep = " ")
+  msgs <- base::trimws( paste( format( base::as.POSIXlt( base::Sys.time(), tz = "UTC"), format = "[%Y-%m-%d %H:%M:%S]"), x, attr_str, sep = " ") )
 
   
   # -- get configuration
