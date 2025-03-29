@@ -1,5 +1,5 @@
 #
-#  Tests for cxapp::.cxappglobalconfig()
+#  Tests for cxapp::.cxappconfig()
 #
 #
 #
@@ -25,23 +25,25 @@ testthat::test_that( "appconfig.emptyConfig", {
   
   current_appconfig <- NA
   
-  if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
-    current_appconfig <- base::get( ".cxappglobalconfig", envir = .GlobalEnv )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    current_appconfig <- base::get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
   
   on.exit( {
 
-    if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
-      base::rm( list = ".cxappglobalconfig", envir = .GlobalEnv )
+    if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
 
-    if ( ! is.na( current_appconfig ) )
-      assign( ".cxappglobalconfig", envir = current_appconfig )
+    if ( inherits( current_appconfig, "cxapp_config" ) )
+      assign( ".cxapp.wrkcache.config", current_appconfig, envir = .GlobalEnv )
 
   }, add = TRUE )
 
-  if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
-    base::rm( list = ".cxappglobalconfig", envir = .GlobalEnv )
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
 
-  if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
     testthat::fail( "Could not stash current app config" )
     
 
@@ -89,7 +91,7 @@ testthat::test_that( "appconfig.emptyConfig", {
   # -- assertions
   
   testthat::expect_true( inherits( result, "cxapp_config" ) )
-  testthat::expect_true( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
+  testthat::expect_true( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
 
 })
 
@@ -113,28 +115,32 @@ testthat::test_that( "appconfig.globalConfig", {
   
   
   
+  
   # - stash current config
   
   current_appconfig <- NA
   
-  if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
-    current_appconfig <- base::get( ".cxappglobalconfig", envir = .GlobalEnv )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    current_appconfig <- base::get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
   
   on.exit( {
     
-    if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
-      base::rm( list = ".cxappglobalconfig", envir = .GlobalEnv )
+    if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
     
-    if ( ! is.na( current_appconfig ) )
-      assign( ".cxappglobalconfig", envir = current_appconfig )
+    if ( inherits( current_appconfig, "cxapp_config" ) )
+      assign( ".cxapp.wrkcache.config", current_appconfig, envir = .GlobalEnv )
     
   }, add = TRUE )
   
-  if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
-    base::rm( list = ".cxappglobalconfig", envir = .GlobalEnv )
   
-  if ( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
     testthat::fail( "Could not stash current app config" )
+  
   
   
   
@@ -231,7 +237,7 @@ testthat::test_that( "appconfig.globalConfig", {
 
   # - global object  
   testthat::expect_true( inherits( result, "cxapp_config" ) )
-  testthat::expect_true( base::exists( ".cxappglobalconfig", envir = .GlobalEnv ) )
+  testthat::expect_true( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
   
   
   # - property value
