@@ -11,7 +11,7 @@ This release of the cxapp package includes a simple configuration management
 based on property files, logging and managing secrets through vaults. The 
 package also includes a simple vault using the local file system.
 
-Future version will incorporate authenticaiton methods, session managements, 
+Future version will incorporate authentication methods, session managements, 
 session and application cache, regulatory compliant audit trail, using remote
 services and much more.
 
@@ -25,7 +25,7 @@ Download and install the latest release of cxapp from https://github.com/cxlib/r
 You can also install the latest release directly using `install.packages()`.   
 
 ```
-install.packages( "https://github.com/cxlib/r-package-cxapp/releases/download/v0.4.0/cxapp_0.4.0.tar.gz", type = "source", INSTALL_opts = "--install-tests" )
+install.packages( "https://github.com/cxlib/r-package-cxapp/releases/download/v0.5.0/cxapp_0.5.0.tar.gz", type = "source", INSTALL_opts = "--install-tests" )
 ```
 
 To install prior releases, replace the version number references in the URL.
