@@ -28,7 +28,7 @@ is used as the context to look up a named property value.
 The \code{option()} method returns the value of an option if it exists or the value
 of \code{unset} if the option does not exist. An option is referred to by the string
 \verb{<context>/<property>}. If the context is specified, the context is assumed
-to be \code{cxapp}.
+to be \code{app}.
 
 If the option is not defined as part of a property file, the \code{option()} method
 searches for an environment variable \verb{<context>_<property>}. Any periods in

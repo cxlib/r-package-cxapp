@@ -8,13 +8,18 @@
 \description{
 An internal utility class representing a connection to an Azure Key Vault
 
+The secret name consists of the characters a-z, 0-9 and dash (-).
+
 The Azure Key Vault is not hierarchical but can use a path notation with
 forward slash as separator to represent a crude hierarchy. The forward
-slashes are translated to underscores mimicking a hierarchical reference
+slashes are translated to dashes mimicking a hierarchical reference
 structure.
 
-The levels of the hierarchy and the secret name consists of the characters
-a-z, 0-9 and punctuation dash (-), underscore '_' and period '.'.
+The method \code{list()} lists the secrets.
+
+The method \code{secret()} retrieves the secret from the Azure Key Vault. If the
+secret does not exist or the connection returns other that success, the value
+of \code{unset} is returned.
 
 The Azure Key Vault relies on multiple cxapp properties.
 
@@ -36,15 +41,13 @@ token. All are required.
 
 \strong{\emph{It is on the role of the developer and implementer to ensure
 that the secrets stored in the vault and their use are appropriately protected.}}
-
-The \code{secret()} method retrieves a specified secret from the vault. If the
-secret is not defined or a connection failed, the value of \code{unset} is returned.
-A secret is stored and returned as a single text value.
 }
 \section{Methods}{
 
 \describe{
 \item{\code{initialize()}}{Initialize vault}
+
+\item{\code{list()}}{List secrets}
 
 \item{\code{secret(x, unset = NA)}}{Get secret}
 }}
