@@ -18,7 +18,7 @@ testthat::test_that( "vaultlocal.initNoVaultDirectoryPath", {
 
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -48,10 +48,10 @@ testthat::test_that( "vaultlocal.initNoVaultDirectoryPath", {
   
   base::writeLines( c( "# test properties file",
                        "VAULT = LOCAL" ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test
@@ -66,7 +66,7 @@ testthat::test_that( "vaultlocal.initConfigDirectoryNotExist", {
 
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -89,7 +89,7 @@ testthat::test_that( "vaultlocal.initConfigDirectoryNotExist", {
   
   # vault directory
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( dir.exists( test_vault_path ) || file.exists( test_vault_path ) )
     testthat::fail( "Unexpected test vault directory exists" )
@@ -104,10 +104,10 @@ testthat::test_that( "vaultlocal.initConfigDirectoryNotExist", {
   base::writeLines( c( "# test properties file",
                        "VAULT = LOCAL", 
                        paste0( "VAULT.DATA = ", test_vault_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
 
   # -- test
@@ -122,7 +122,7 @@ testthat::test_that( "vaultlocal.emptyList", {
 
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -145,7 +145,7 @@ testthat::test_that( "vaultlocal.emptyList", {
   
   # vault directory
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_vault_path ) && ! dir.create( test_vault_path, recursive = TRUE ) )
     testthat::fail( "Could not stage test vault directory" )
@@ -160,10 +160,10 @@ testthat::test_that( "vaultlocal.emptyList", {
   base::writeLines( c( "# test properties file",
                        "VAULT = LOCAL", 
                        paste0( "VAULT.DATA = ", test_vault_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test
@@ -188,7 +188,7 @@ testthat::test_that( "vaultlocal.list", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -211,7 +211,7 @@ testthat::test_that( "vaultlocal.list", {
   
   # vault directory
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_vault_path ) && ! dir.create( test_vault_path, recursive = TRUE ) )
     testthat::fail( "Could not stage test vault directory" )
@@ -226,10 +226,10 @@ testthat::test_that( "vaultlocal.list", {
   base::writeLines( c( "# test properties file",
                        "VAULT = LOCAL", 
                        paste0( "VAULT.DATA = ", test_vault_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # inject secrets
@@ -283,7 +283,7 @@ testthat::test_that( "vaultlocal.secretNotExist", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -306,7 +306,7 @@ testthat::test_that( "vaultlocal.secretNotExist", {
   
   # vault directory
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_vault_path ) && ! dir.create( test_vault_path, recursive = TRUE ) )
     testthat::fail( "Could not stage test vault directory" )
@@ -321,10 +321,10 @@ testthat::test_that( "vaultlocal.secretNotExist", {
   base::writeLines( c( "# test properties file",
                        "VAULT = LOCAL", 
                        paste0( "VAULT.DATA = ", test_vault_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # inject secrets
@@ -384,7 +384,7 @@ testthat::test_that( "vaultlocal.secret", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -407,7 +407,7 @@ testthat::test_that( "vaultlocal.secret", {
   
   # vault directory
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_vault_path ) && ! dir.create( test_vault_path, recursive = TRUE ) )
     testthat::fail( "Could not stage test vault directory" )
@@ -422,10 +422,10 @@ testthat::test_that( "vaultlocal.secret", {
   base::writeLines( c( "# test properties file",
                        "VAULT = LOCAL", 
                        paste0( "VAULT.DATA = ", test_vault_path ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # inject secrets

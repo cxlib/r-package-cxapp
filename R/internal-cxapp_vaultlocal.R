@@ -39,8 +39,8 @@
 
   # -- initialize self
   #    note: initialize with temporary directory that does not exist
-  .self$.attr <- c( "path" = cxapp:::.cxapp_standardpath( base::tempfile( pattern = "vault-", tmpdir = base::tempdir(), fileext = "") ), 
-                    "cache" = cxapp:::.cxapp_standardpath( base::tempfile( pattern = "vault-cache-", tmpdir = base::tempdir(), fileext = "") ) )
+  .self$.attr <- c( "path" = cxapp::cxapp_standardpath( base::tempfile( pattern = "vault-", tmpdir = base::tempdir(), fileext = "") ), 
+                    "cache" = cxapp::cxapp_standardpath( base::tempfile( pattern = "vault-cache-", tmpdir = base::tempdir(), fileext = "") ) )
   
   
   # -- configuration

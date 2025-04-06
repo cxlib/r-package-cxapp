@@ -4,10 +4,12 @@
 \alias{cxapp_log}
 \title{Simple function to log messages}
 \usage{
-cxapp_log(x, echo = base::interactive())
+cxapp_log(x, attr = NULL, echo = base::interactive())
 }
 \arguments{
 \item{x}{Vector of messages to log}
+
+\item{attr}{A vector of attribute values to append to log message}
 
 \item{echo}{Enable/Disable output of log messages to console}
 }
@@ -32,6 +34,9 @@ are \code{YEAR}, \code{MONTH} and \code{DAY}. The log rotation follows the forma
 year and two digit month and day.
 
 Log messages follow the convention \verb{[\%Y-\%m-\%d \%H:\%M:\%S] <message>}
+
+Specified attribute values are appended to the log message between square
+brackets delimited by semi-colon.
 
 if executing in \code{interactive()} mode, log messages are written to the console.
 }

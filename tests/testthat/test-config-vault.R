@@ -14,7 +14,7 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -38,7 +38,7 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
   
   # stage vault
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_vault_path ) && ! dir.create( test_vault_path, recursive = TRUE ) )
     testthat::fail( "Could not stage test vault directory" )
@@ -86,10 +86,10 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
                        paste0( "VAULT.DATA = ", test_vault_path ),
                        "# -- property",
                        paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
 
   # -- test
@@ -116,7 +116,7 @@ testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -140,7 +140,7 @@ testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
   
   # stage vault
   
-  test_vault_path <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
+  test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
   if ( ! dir.exists( test_vault_path ) && ! dir.create( test_vault_path, recursive = TRUE ) )
     testthat::fail( "Could not stage test vault directory" )
@@ -189,10 +189,10 @@ testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
                        paste0( "VAULT.DATA = ", test_vault_path ),
                        "# -- property",
                        paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
 
   # -- test

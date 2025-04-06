@@ -17,7 +17,7 @@ testthat::test_that( "vault.invalidVaultName", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -50,10 +50,10 @@ testthat::test_that( "vault.invalidVaultName", {
   
   base::writeLines( c( "# test properties file",
                        paste0( "VAULT = ", test_reference ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # -- test

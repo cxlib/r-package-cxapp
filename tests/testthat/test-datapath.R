@@ -10,7 +10,7 @@ testthat::test_that( "datapath.noParmsNoConfig", {
     
   # -- stage
 
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -38,10 +38,10 @@ testthat::test_that( "datapath.noParmsNoConfig", {
     testthat::fail("Could not stage cxapp in test area")
   
   base::writeLines( c( "# empty test properties file"),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   
@@ -64,7 +64,7 @@ testthat::test_that( "datapath.elementsNoConfig", {
     
   # -- stage
 
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -92,10 +92,10 @@ testthat::test_that( "datapath.elementsNoConfig", {
     testthat::fail("Could not stage cxapp in test area")
   
   base::writeLines( c( "# empty test properties file"),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # path elements
@@ -125,7 +125,7 @@ testthat::test_that( "datapath.elementsDataPathNotExists", {
     
   # -- stage
 
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -150,7 +150,7 @@ testthat::test_that( "datapath.elementsDataPathNotExists", {
   # data paths
   
   test_data_paths <- base::replicate( 5,
-                                      cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-data-", tmpdir = test_root, fileext = "") ), 
+                                      cxapp::cxapp_standardpath( base::tempfile( pattern = "test-data-", tmpdir = test_root, fileext = "") ), 
                                       simplify = TRUE )
   
   
@@ -162,10 +162,10 @@ testthat::test_that( "datapath.elementsDataPathNotExists", {
   
   base::writeLines( c( "# test properties file",
                        paste0( "DATA = ", paste( test_data_paths, collapse = .Platform$path.sep ) ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # path elements
@@ -194,7 +194,7 @@ testthat::test_that( "datapath.elementsDataPathLastExists", {
   
   # -- stage
   
-  test_root <- cxapp:::.cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -219,7 +219,7 @@ testthat::test_that( "datapath.elementsDataPathLastExists", {
   # data paths
   
   test_data_paths <- base::replicate( 5,
-                                      cxapp:::.cxapp_standardpath( base::tempfile( pattern = "test-data-", tmpdir = test_root, fileext = "") ), 
+                                      cxapp::cxapp_standardpath( base::tempfile( pattern = "test-data-", tmpdir = test_root, fileext = "") ), 
                                       simplify = TRUE )
   
   if ( ! dir.exists( utils::tail( test_data_paths, n = 1) ) && ! dir.create( utils::tail( test_data_paths, n = 1), recursive = TRUE ) )
@@ -236,10 +236,10 @@ testthat::test_that( "datapath.elementsDataPathLastExists", {
   
   base::writeLines( c( "# test properties file",
                        paste0( "DATA = ", paste( test_data_paths, collapse = .Platform$path.sep ) ) ),
-                    con = file.path( test_cxapp_path, "cxapp.properties", fsep = "/") )
+                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "cxapp.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp.properties" )
+  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+    testthat::fail( "Could not stage app.properties" )
   
   
   # path elements

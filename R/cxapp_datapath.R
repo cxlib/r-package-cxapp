@@ -52,7 +52,7 @@ cxapp_datapath <- function( ... ) {
           
   
   # -- return
-  return( cxapp:::.cxapp_standardpath( data_path ) )
+  return( cxapp::cxapp_standardpath( data_path ) )
 }
 
 
