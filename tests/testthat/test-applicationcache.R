@@ -160,7 +160,7 @@ testthat::test_that( "appcache.configAppCacheNotExist", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -256,7 +256,7 @@ testthat::test_that( "appcache.configAppCache", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -362,7 +362,7 @@ testthat::test_that( "appcache.addNothingSpecified", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -464,7 +464,7 @@ testthat::test_that( "appcache.addNull", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -562,7 +562,7 @@ testthat::test_that( "appcache.addNA", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -662,7 +662,7 @@ testthat::test_that( "appcache.addNothingToDo", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -770,7 +770,7 @@ testthat::test_that( "appcache.addFileNotExist", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -907,7 +907,7 @@ testthat::test_that( "appcache.addFileNotNamed", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -1099,7 +1099,7 @@ testthat::test_that( "appcache.addFileNotAllNamed", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -1292,7 +1292,7 @@ testthat::test_that( "appcache.addFileAllNamed", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -1480,7 +1480,7 @@ testthat::test_that( "appcache.configExpire", {
   base::writeLines( c( "# test properties file",
                        "# expire in 5 min",
                        "APPCACHE.EXPIRE = 5",
-                       paste( "CACHEPATH =", test_cachepath ) ),
+                       paste( "APPCACHE.PATH =", test_cachepath ) ),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -1675,7 +1675,7 @@ testthat::test_that( "appcache.exists", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -1874,7 +1874,7 @@ testthat::test_that( "appcache.get", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -2043,7 +2043,7 @@ testthat::test_that( "appcache.drop", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -2223,7 +2223,7 @@ testthat::test_that( "appcache.touch", {
   base::writeLines( c( "# test properties file",
                        "# expire in 30 days or 30*24*60 minutes",
                        "APPCACHE.EXPIRE = 43200",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
@@ -2408,7 +2408,7 @@ testthat::test_that( "appcache.purge", {
     testthat::fail("Could not stage cxapp in test area")
 
   base::writeLines( c( "# test properties file",
-                       paste( "CACHEPATH =", test_cachepath )),
+                       paste( "APPCACHE.PATH =", test_cachepath )),
                     con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
 
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )

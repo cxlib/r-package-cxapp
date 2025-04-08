@@ -175,4 +175,34 @@ See help for `cxapp::.cxapp_vaultazurekv()` for further details.
 
 <br/>
 
+## Application Cache
+The package implements a simple generic file-based cache with support for item
+expiration. 
+
+The cache uses a generic reference to items that is specified when the item
+is added. By design, you can only add, retrieve and check the existence of an
+item. Listing items in the cache is not supported.
+
+To store R objects in the application cache, store the object as a file and add
+the file to the cache.
+
+The cache path can be specified with the app property `APPCACHE.PATH`. If the 
+application cache path is not specified, the R session temporary directory is
+used.
+
+The duration in minutes until an item expires in the cache can be set with the
+app property `APPCACHE.EXPIRE`, If not set, 1440 minutes, or 24 hours, is 
+assumed. 
+
+The application cache configuration is cached as a global environment object 
+in the R session for performance reasons (see `cxapp::.cxappcache()`).
+
+See help for `cxapp::cxapp_applicationcache()` for further details. 
+
+<br/>
+
+
+
+
+
 

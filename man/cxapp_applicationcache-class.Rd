@@ -9,8 +9,8 @@
 The application cache is a normalized file caching utility. An item is
 referenced by a path syntax that maps to the item.
 
-The location of the cache is set by the configuration option \code{CACHEPATH} in
-\code{app.properties}. If \code{CACHEPATH} is not defined, the \code{.cache} sub-directory
+The location of the cache is set by the configuration option \code{APPCACHE.PATH} in
+\code{app.properties}. If \code{APPCACHE.PATH} is not defined, the \code{.cache} sub-directory
 in the temporary directory \link[base]{tempdir} for the current R session is
 used.
 
