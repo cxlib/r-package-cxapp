@@ -11,16 +11,29 @@
 #' environmental variables.
 #' 
 #' Property files are named `<context>.properties` where the configuration option
-#' is referred to by `context/<property>`. 
+#' is referred to by `<context>/<property>`. 
 #' 
 #' Property file syntax and conventions are specified in the help reference for 
 #' function \link[cxapp]{cxapp_propertiesread}.
 #' 
-#' Class initialization takes a vector of paths as an argument. If the path
-#' specified ends in `.properties`, it is assumed a properties file. Otherwise,
-#' the entry is assumed a directory containing property files. The vector `x` 
-#' is processed in specified order and files within a directory in natural sort 
-#' order. 
+#' The class initialization first searches for the file `app.properties` in the 
+#' following sequence of directories.
+#' 
+#' \itemize{
+#'   \item Current working directory (\link[base]{getwd})
+#'   \item Directory `$APP_HOME/config`, if the `APP_HOME` environmental variable
+#'         is defined
+#'   \item Directory `$APP_HOME`, if the `APP_HOME` environmental variable is
+#'         defined
+#'   \item The cxapp package install directory in the library tree 
+#'         (\link[base]{.libPaths})
+#' }
+#' 
+#' Class initialization also takes an optional vector of paths as an argument. 
+#' If the path specified ends in `.properties`, it is assumed a properties file. 
+#' Otherwise, the entry is assumed a directory containing one or more property 
+#' files. The vector `x` is processed in specified order and files within a
+#' directory in natural sort order. 
 #' 
 #' A property file name contains the characters a-z and digits 0-9 and the file 
 #' extension `properties`. The property file name excluding the file extension 
@@ -28,7 +41,7 @@
 #' 
 #' The `option()` method returns the value of an option if it exists or the value
 #' of `unset` if the option does not exist. An option is referred to by the string
-#' `<context>/<property>`. If the context is specified, the context is assumed
+#' `<context>/<property>`. If the context is not specified, the context is assumed
 #' to be `app`.
 #' 
 #' If the option is not defined as part of a property file, the `option()` method
@@ -36,7 +49,7 @@
 #' property name part is converted to underscores.  
 #' 
 #' An option value that contains the prefix `[env] <name>` or starts with the 
-#' character `$<name>` is interpreted as a reference to an environmental 
+#' character `$`, as in `$<name>`, is interpreted as a reference to an environmental 
 #' variable with specified name. If the specified environmental variable is not
 #' defined, the value of `unset` is returned. The environmental variable name is
 #' case sensitive with leading and trailing spaces removed.
@@ -47,6 +60,18 @@
 #' value of `unset` is returned. The secret name is case sensitive with leading
 #' and trailing spaces removed.
 #' 
+#' The `as.type` parameter in the `option()` method affects how a property value
+#' is returned. If `as.type` is equal to `TRUE` (default), then 
+#' \itemize{
+#'   \item a vector of paths is returned if the property name includes the word
+#'         `PATH`, case insensitive
+#'   \item logical value `TRUE` is returned if the property value is equal to 
+#'         `enable`, `enabled`, `grant` or `permit`
+#'   \item logical value `FALSE` is returned if the property value is equal to 
+#'         `disable`, `disabled`, `revoke` or `deny`
+#' }
+#' 
+#' If `as.type` is equal to `FALSE`, the actual property value unaltered is returned.
 #' 
 #' 
 #' @exportClass cxapp_config
