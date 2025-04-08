@@ -67,8 +67,32 @@ cxapp_authapi <- function( x ) {
     # - cache reference
     cache_ref <- paste0( ".cache/.token/..", token, ".." )
 
-    # - token is not cached ... look into vaults
-    if ( ! appcache$exists( cache_ref ) ) {
+    # - token is cached ?
+
+    if ( appcache$exists( cache_ref ) ) {
+
+      # - token is cached
+      token_info <- try( jsonlite::fromJSON( appcache$get( cache_ref ) ), silent = FALSE )
+
+      if ( inherits( token_info, "try-error") )
+        return(invisible(FALSE))
+
+
+      #   resolve pass with attributes
+
+      auth_result <- TRUE
+
+      for ( xattr in c( "scope", "principal") )
+        if ( xattr %in% names(token_info) )
+          attr( auth_result, xattr) <- unname(token_info[[xattr]])
+
+      return(invisible(auth_result))
+
+
+      # end of if-statement block when token is cached
+    } else {
+
+      # - token is not cached ... look into vaults
 
       # - connect to vault
       vlt <- try( cxapp::cxapp_vault(), silent = TRUE )
