@@ -218,8 +218,36 @@ See help for `cxapp::cxapp_applicationcache()` for further details.
 
 <br/>
 
+## API Authenitcation
+The cxapp package includes a simple function `cxapp_authapi()` combined with a
+Key Vault to authenticate API requests using the Authorization Bearer method.
 
+```
+   Authorization: Bearer <token>
+```
 
+The encoded token value is stored in a cxapp supported vault using a simple
+JSON structure.
 
+```
+{ 
+   "scope" : "<user or service>",
+   "principal" : "<user or service name>",
+   "value" : "<encoded token>"
+}
 
+```
+
+The token is encoded using the internal function `cxapp:::.cxapp_apitokenencode()`.
+
+The attributes `scope` and `principal` are optional but can be used to identify
+who was just authorized.
+
+For performance reasons and to limit the number of vault requests, authorized
+tokens are cached (see _Application cache_) with further caching enhancements to
+come. 
+
+See help for `cxapp::cxapp_authapi()` for further details. 
+
+<br/>
 
