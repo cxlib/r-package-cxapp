@@ -14,8 +14,8 @@
 #' The application cache is a normalized file caching utility. An item is 
 #' referenced by a path syntax that maps to the item. 
 #' 
-#' The location of the cache is set by the configuration option `CACHEPATH` in 
-#' `app.properties`. If `CACHEPATH` is not defined, the `.cache` sub-directory  
+#' The location of the cache is set by the configuration option `APPCACHE.PATH` in 
+#' `app.properties`. If `APPCACHE.PATH` is not defined, the `.cache` sub-directory  
 #' in the temporary directory \link[base]{tempdir} for the current R session is 
 #' used.
 #' 
@@ -62,7 +62,7 @@ cxapp_applicationcache$methods( "initialize" = function() {
   
   # -- cache directory
   
-  cache_root <- cxapp::cxapp_standardpath( cxapp::.cxappconfig()$option( "app/cachepath", unset = NA) )
+  cache_root <- cxapp::cxapp_standardpath( cxapp::.cxappconfig()$option( "app/appcache.path", unset = NA) )
   
   if ( is.na( cache_root) ) {
 

@@ -191,7 +191,7 @@
   xsecret <- base::gsub( "/", "-", x )
   
   # -- remove leading underscore
-  if ( base::startsWith( xsecret, "_" ) )
+  if ( base::startsWith( xsecret, "-" ) )
     xsecret <- base::substring( xsecret, 2 )
   
   

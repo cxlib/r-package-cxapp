@@ -13,23 +13,30 @@ cxapp_authapi(x)
 \code{TRUE} if authorization is valid. \code{FALSE}, otherwise
 }
 \description{
-The function currently only supports bearer method of authorization. If the
-authorization is not a bearer method, the result is surely \code{FALSE}.
+The function authorizes a request based on the request Authorization header.
+The parameter \code{x} is the Authorization header value, including any keywords
+or phrases identifying the method, e.g. \verb{Bearer <token>}.
 
-The function also only supports bearer tokens registered as a secret in a
-supported key vault (see \link[cxapp]{cxapp_vault}).
+\emph{The function currently only supports bearer method of authorization. If the
+authorization is not a bearer method, the result is surely \code{FALSE}.}
+
+The bearer method implementation supported by the function is based on the
+Authorization header standard convention \verb{Bearer <token>}.
+
+The function currently only supports authorizing bearer tokens registered as
+a secret in a supported key vault (see \link[cxapp]{cxapp_vault}).
 
 The space delimited list of named secrets is defined using the configuration option
-\code{API.AUTH.SECRETS} in the app.properties file (see \link[cxapp]{cxapp_config}).
+\code{API.AUTH.SECRETS} in the \code{app.properties} file (see \link[cxapp]{cxapp_config}).
 If no secrets are defined, the authorization result is surely \code{FALSE}.
 
 The function searches the defined list of secrets for a match to the encoded
-bearer string, excluding the \emph{bearer} prefix. The search assumes the secret
-is a JSON data structure with a named element \code{value} retaining the encoded
+bearer string, excluding the \emph{Bearer} prefix. The search assumes the secret
+is a JSON data structure with a named element \code{value} containing the encoded
 string.
 
 If a secret ends in an asterisk \code{*}, the secret name is assumed to be a prefix
-and all secrets with the prefix is searched.
+and all secrets with the specified prefix is searched.
 
 The use of the hierarchical reference in secret names is supported. See the
 respective vault configuration.
@@ -37,9 +44,9 @@ respective vault configuration.
 If the encoded bearer string matches the secret value, the function returns
 \code{TRUE}.
 
-The result attribute \code{scope}, if defined, denotes if the authorization applies
-to a service or particular user.
+The result attribute \code{scope}, if defined in the JSON data structure, denotes
+if the token applies to a service or particular user.
 
-The result attribute \code{principal}, if defined, names the service or user
-associated with the authorization.
+The result attribute \code{principal}, if defined in the JSON data structure, names
+the service or user associated with the token.
 }

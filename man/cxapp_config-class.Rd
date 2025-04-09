@@ -10,16 +10,29 @@ A utility class to represent app configurations defined in property files and
 environmental variables.
 
 Property files are named \verb{<context>.properties} where the configuration option
-is referred to by \verb{context/<property>}.
+is referred to by \verb{<context>/<property>}.
 
 Property file syntax and conventions are specified in the help reference for
 function \link[cxapp]{cxapp_propertiesread}.
 
-Class initialization takes a vector of paths as an argument. If the path
-specified ends in \code{.properties}, it is assumed a properties file. Otherwise,
-the entry is assumed a directory containing property files. The vector \code{x}
-is processed in specified order and files within a directory in natural sort
-order.
+The class initialization first searches for the file \code{app.properties} in the
+following sequence of directories.
+
+\itemize{
+\item Current working directory (\link[base]{getwd})
+\item Directory \verb{$APP_HOME/config}, if the \code{APP_HOME} environmental variable
+is defined
+\item Directory \verb{$APP_HOME}, if the \code{APP_HOME} environmental variable is
+defined
+\item The cxapp package install directory in the library tree
+(\link[base]{.libPaths})
+}
+
+Class initialization also takes an optional vector of paths as an argument.
+If the path specified ends in \code{.properties}, it is assumed a properties file.
+Otherwise, the entry is assumed a directory containing one or more property
+files. The vector \code{x} is processed in specified order and files within a
+directory in natural sort order.
 
 A property file name contains the characters a-z and digits 0-9 and the file
 extension \code{properties}. The property file name excluding the file extension
@@ -27,7 +40,7 @@ is used as the context to look up a named property value.
 
 The \code{option()} method returns the value of an option if it exists or the value
 of \code{unset} if the option does not exist. An option is referred to by the string
-\verb{<context>/<property>}. If the context is specified, the context is assumed
+\verb{<context>/<property>}. If the context is not specified, the context is assumed
 to be \code{app}.
 
 If the option is not defined as part of a property file, the \code{option()} method
@@ -35,7 +48,7 @@ searches for an environment variable \verb{<context>_<property>}. Any periods in
 property name part is converted to underscores.
 
 An option value that contains the prefix \verb{[env] <name>} or starts with the
-character \verb{$<name>} is interpreted as a reference to an environmental
+character \code{$}, as in \verb{$<name>}, is interpreted as a reference to an environmental
 variable with specified name. If the specified environmental variable is not
 defined, the value of \code{unset} is returned. The environmental variable name is
 case sensitive with leading and trailing spaces removed.
@@ -45,6 +58,19 @@ a reference to a vault secret with specified name. If a vault service is not
 configured or available or the vault hs not defined the specified secret, the
 value of \code{unset} is returned. The secret name is case sensitive with leading
 and trailing spaces removed.
+
+The \code{as.type} parameter in the \code{option()} method affects how a property value
+is returned. If \code{as.type} is equal to \code{TRUE} (default), then
+\itemize{
+\item a vector of paths is returned if the property name includes the word
+\code{PATH}, case insensitive
+\item logical value \code{TRUE} is returned if the property value is equal to
+\code{enable}, \code{enabled}, \code{grant} or \code{permit}
+\item logical value \code{FALSE} is returned if the property value is equal to
+\code{disable}, \code{disabled}, \code{revoke} or \code{deny}
+}
+
+If \code{as.type} is equal to \code{FALSE}, the actual property value unaltered is returned.
 }
 \section{Fields}{
 

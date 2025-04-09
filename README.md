@@ -25,7 +25,7 @@ Download and install the latest release of cxapp from https://github.com/cxlib/r
 You can also install the latest release directly using `install.packages()`.   
 
 ```
-install.packages( "https://github.com/cxlib/r-package-cxapp/releases/download/v0.5.1/cxapp_0.5.1.tar.gz", type = "source", INSTALL_opts = "--install-tests" )
+install.packages( "https://github.com/cxlib/r-package-cxapp/releases/download/v0.5.2/cxapp_0.5.2.tar.gz", type = "source", INSTALL_opts = "--install-tests" )
 ```
 
 To install prior releases, replace the version number references in the URL.
@@ -37,39 +37,56 @@ To install prior releases, replace the version number references in the URL.
 ## Configuration Properties
 
 The cxapp package contains a simple approach to app and service configuration using
-the R reference class `cxapp_config( <paths> )`. 
+standard property files and the R reference class `cxapp_config()`.
 
-The `cxapp_config()` function first searches for and uses the first occurrence of
-the file `cxapp.properties` in a cxapp sub-directory under `.libPaths()`, as would
-be the case if cxapp is installed and has a properties file. The function then
-searches for property files in the specified sequence of paths. If a path is 
-specified as a directory, all property files within the directory are processed
-in natural sort order.
+Property files are named `⁠<context>.properties`⁠ where the configuration opti
+on is referred to by `⁠<context>/<property>`⁠.
 
-The property file name consists of one or more of the characters A-Z and digits 0-9
-and ends in the file extension `.properties`.
+Property file syntax and conventions are specified in the help reference for
+function `cxapp_propertiesread()`.
 
-The property file name, excluding the file extension, defines the property context
-in references using the convention `<context>/<property name>`. The default context
-is `cxapp` and can be omitted.
+The class initialization first searches for the file `app.properties` in the
+following sequence of directories.
 
-A property is defined as a key/value pair. The key consists of one or more of the 
-characters A-Z, digits 0-9 and punctuations underscore `_` and period `.`. 
+- Current working directory
+- Directory `$APP_HOME/config`, if the `APP_HOME` environmental variable is defined
+- Directory `$APP_HOME`, if the `APP_HOME` environmental variable is defined
+- The cxapp package install directory in the library tree (see `.libPaths()`)
 
-The first equal sign `=` or a colon `:` separates the key from value. Any additional
-delimiters are assumed part of the value. Leading and trailing white space is removed 
-from the value. 
+Class initialization also takes an optional vector of paths as an argument. If 
+the path specified ends in `.properties`, it is assumed a properties file. 
+Otherwise, the entry is assumed a directory containing one or more property 
+files. The vector of paths is processed in specified order and files within a 
+directory in natural sort order.
 
-Lines in the property file starting with a hash `#` or exclamation point `!` are 
-treated as comments. Empty lines are ignored.
+A property file name contains the characters a-z and digits 0-9 and the file
+extension `properties`. The property file name excluding the file extension 
+is used as the context to look up a named property value.
 
-A property value prefixed with the tag `[env]` or starting with the character `$`
-refers to an environmental variable. The value of the environmental variable is 
-returned as the value of the property.
+The `option()` method in `cxapp_config()` returns the value of an option if
+it exists, or the value of `unset` if the option does not exist. An option 
+is referred to by the string `<context>/<property>`. If the context is not 
+specified, the context `app` is assumed.
 
-A property value prefixed with the tag `[vault]` refers to the name of a secret 
-stored in a connected vault (see Vaults below). The value of the vault secret 
-is returned as the value of the property.
+An option value that starts with the prefix
+- `[env] <name>` or starts with the character `$`, as in `$<name>`⁠ is
+  interpreted as a reference to an environmental variable with specified name
+- `[vault] <name>` is interpreted as a reference to a vault secret with specified name.
+
+For both references, name is case sensitive with leading and trailing spaces removed.
+
+The `as.type` parameter of the `option()` method in `cxapp_config()` affects 
+how a property value is returned. If `as.type` is equal to `TRUE` (default), then
+
+- a vector of paths is returned if the property name includes the phrase PATH, 
+  case insensitive
+- the logical value `TRUE` is returned if the property value is equal to `enable`,
+  `enabled`, `grant` or `permit`
+- the logical value `FALSE` is returned if the property value is equal to `disable`,
+  `disabled`, `revoke` or `deny`
+
+If `as.type` is equal to `FALSE`, the actual property value unaltered is returned.
+
 
 See help for `cxapp::cxapp_config()` for further details.
 
@@ -175,4 +192,62 @@ See help for `cxapp::.cxapp_vaultazurekv()` for further details.
 
 <br/>
 
+## Application Cache
+The package implements a simple generic file-based cache with support for item
+expiration. 
+
+The cache uses a generic reference to items that is specified when the item
+is added. By design, you can only add, retrieve and check the existence of an
+item. Listing items in the cache is not supported.
+
+To store R objects in the application cache, store the object as a file and add
+the file to the cache.
+
+The cache path can be specified with the app property `APPCACHE.PATH`. If the 
+application cache path is not specified, the R session temporary directory is
+used.
+
+The duration in minutes until an item expires in the cache can be set with the
+app property `APPCACHE.EXPIRE`, If not set, 1440 minutes, or 24 hours, is 
+assumed. 
+
+The application cache configuration is cached as a global environment object 
+in the R session for performance reasons (see `cxapp::.cxappcache()`).
+
+See help for `cxapp::cxapp_applicationcache()` for further details. 
+
+<br/>
+
+## API Authenitcation
+The cxapp package includes a simple function `cxapp_authapi()` combined with a
+Key Vault to authenticate API requests using the Authorization Bearer method.
+
+```
+   Authorization: Bearer <token>
+```
+
+The encoded token value is stored in a cxapp supported vault using a simple
+JSON structure.
+
+```
+{ 
+   "scope" : "<user or service>",
+   "principal" : "<user or service name>",
+   "value" : "<encoded token>"
+}
+
+```
+
+The token is encoded using the internal function `cxapp:::.cxapp_apitokenencode()`.
+
+The attributes `scope` and `principal` are optional but can be used to identify
+who was just authorized.
+
+For performance reasons and to limit the number of vault requests, authorized
+tokens are cached (see _Application cache_) with further caching enhancements to
+come. 
+
+See help for `cxapp::cxapp_authapi()` for further details. 
+
+<br/>
 

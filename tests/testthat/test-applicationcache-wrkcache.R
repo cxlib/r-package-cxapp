@@ -120,7 +120,7 @@ testthat::test_that( "appcache.noConfig", {
   # - inject configuration
   
   base::writeLines( c( "# test configuration", 
-                       paste0( "CACHEPATH = ", test_cachepath ) ), 
+                       paste0( "APPCACHE.PATH = ", test_cachepath ) ), 
                     con = file.path( test_apphome, "config", "app.properties", fsep = "/") )
   
   if ( ! file.exists( file.path( test_apphome, "config", "app.properties", fsep = "/") ) )
