@@ -20,6 +20,34 @@ testthat::test_that( "datapath.noParmsNoConfig", {
     testthat::fail("Could not create test area")
   
   
+  
+  
+  # - move global in-memory cached config
+  
+  prev_config <- NA
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  on.exit( {
+    
+    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+    
+    if ( inherits( prev_config, "cxapp_config" ) )
+      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    testthat::fail( "Could not stash app config" )
+  
+  
+  
   # update .libPaths
   
   current_libpaths <- .libPaths()
@@ -72,6 +100,34 @@ testthat::test_that( "datapath.elementsNoConfig", {
   
   if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail("Could not create test area")
+  
+  
+  
+  
+  # - move global in-memory cached config
+  
+  prev_config <- NA
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  on.exit( {
+    
+    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+    
+    if ( inherits( prev_config, "cxapp_config" ) )
+      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    testthat::fail( "Could not stash app config" )
+  
   
   
   # update .libPaths
@@ -133,6 +189,34 @@ testthat::test_that( "datapath.elementsDataPathNotExists", {
   
   if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail("Could not create test area")
+  
+  
+  
+  
+  # - move global in-memory cached config
+  
+  prev_config <- NA
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  on.exit( {
+    
+    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+    
+    if ( inherits( prev_config, "cxapp_config" ) )
+      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    testthat::fail( "Could not stash app config" )
+  
   
   
   # update .libPaths
@@ -202,6 +286,34 @@ testthat::test_that( "datapath.elementsDataPathLastExists", {
   
   if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail("Could not create test area")
+  
+  
+  
+  # - move global in-memory cached config
+  
+  prev_config <- NA
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  on.exit( {
+    
+    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+    
+    if ( inherits( prev_config, "cxapp_config" ) )
+      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    testthat::fail( "Could not stash app config" )
+  
+  
   
   
   # update .libPaths

@@ -60,7 +60,7 @@ cxapp_log <- function( x, attr = NULL, echo = base::interactive() ) {
 
   
   # -- get configuration
-  cfg <- cxapp::cxapp_config()
+  cfg <- cxapp::.cxappconfig()
 
   
   # -- echo mode ... send to console  

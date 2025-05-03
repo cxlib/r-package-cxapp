@@ -27,6 +27,33 @@ testthat::test_that( "vault.invalidVaultName", {
     testthat::fail("Could not create test area")
   
   
+  # - move global in-memory cached config
+  
+  prev_config <- NA
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  on.exit( {
+    
+    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+    
+    if ( inherits( prev_config, "cxapp_config" ) )
+      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  
+  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
+    testthat::fail( "Could not stash app config" )
+  
+  
+  
+  
   # update .libPaths
   
   current_libpaths <- .libPaths()

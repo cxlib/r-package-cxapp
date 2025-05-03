@@ -44,7 +44,7 @@
   
   
   # -- configuration
-  cfg <- cxapp::cxapp_config()
+  cfg <- cxapp::.cxappconfig()
   
   if ( base::toupper( cfg$option( "vault", unset = "unknown" ) != "LOCAL" ) )
     stop( "Vault configuration is not local" )
@@ -103,7 +103,7 @@
     return(invisible(unset))
   
 
-  return(invisible( utils::head( base::readLines( secrets_file ), n = 1 ) ))
+  return(invisible( utils::head( base::readLines( secrets_file, warn = FALSE ), n = 1 ) ))
 })
 
 

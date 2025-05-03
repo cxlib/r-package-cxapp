@@ -29,9 +29,9 @@ cxapp_datapath <- function( ... ) {
 
   # -- define root path
   xroot <- character(0)
-  
-  cfg <- cxapp::cxapp_config()
-  
+
+  cfg <- cxapp::.cxappconfig()
+
   if ( ! is.na(cfg$option( "DATA", unset = NA )) ) {
     xpaths <- base::unlist( base::strsplit( cfg$option("DATA"), .Platform$path.sep, fixed = TRUE ) )
    
