@@ -103,7 +103,7 @@
     return(invisible(unset))
   
 
-  return(invisible( utils::head( base::readLines( secrets_file ), n = 1 ) ))
+  return(invisible( utils::head( base::readLines( secrets_file, warn = FALSE ), n = 1 ) ))
 })
 
 
