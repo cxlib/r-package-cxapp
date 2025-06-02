@@ -22,13 +22,19 @@ services and much more.
 
 Download and install the latest release of cxapp from https://github.com/cxlib/r-package-cxapp/releases/latest
 
-You can also install the latest release directly using `install.packages()`.   
+You can also install the latest release directly using `install.packages()`. 
 
 ```
-install.packages( "https://github.com/cxlib/r-package-cxapp/releases/download/v0.5.3/cxapp_0.5.3.tar.gz", type = "source", INSTALL_opts = "--install-tests" )
+# -- install dependencies
+#    note: see DESCRIPTION for package dependencies
+#    note: latest version of DESCRIPTION  https://github.com/cxlib/r-package-cxapp/blob/main/DESCRIPTION
+
+install.packages( "https://github.com/cxlib/r-package-cxapp/releases/download/v0.0.0/cxapp_0.0.0.tar.gz", type = "source", INSTALL_opts = "--install-tests" )
 ```
 
-To install prior releases, replace the version number references in the URL.
+Replace the version `0.0.0` reference in the URL to the specific version or release that you wish to install
+
+Any cxapp package dependencies, listed in the `DESCRIPTION` file, will need to be installed prior to installing cxapp. 
 
 <br/>
 
@@ -98,20 +104,27 @@ The cxapp package includes a simple logging utility.
 The log directory is specified by the cxapp property `LOG.PATH`.
 
 The root of the log file name can be customized using the cxapp property
-`LOG.NAME`. If the log name is not specified, the default name is `app.log`.
+`LOG.NAME`. If the log name is not specified, the default name is `app.log` for
+messages registered with `cxapp_log()` and `app.err` with `cxapp_logerr()`.
 
 A simple form of automated rotation of logs can defined using the `LOG.ROTATION`
 cxapp property. A property value of 
-* `YEAR` enables annual rotation and results in the log file name `<name>-yyyy.log`
-* `MONTH` enables monthly rotation and results in the log file name `<name>-yyyymm.log`
-* `DAY` enables daily rotation and results in the log file name `<name>-yyyymmdd.log`
+* `YEAR` enables annual rotation and results in the log file name `<name>-yyyy.log` and `<name>-yyyy.err`
+* `MONTH` enables monthly rotation and results in the log file name `<name>-yyyymm.log` and `<name>-yyyymm.err`
+* `DAY` enables daily rotation and results in the log file name `<name>-yyyymmdd.log` and `<name>-yyyymmdd.err`
 
 Log entries in the log file are prefixed by the date and time of when the log entry was
-created/appended. 
+created/appended. Error log entries include a suffix that indicates which lines were
+written concurrently, given that more than one node could be writing to the same file 
+at the same time.
 
 All log references to date and time is in UTC format.
 
-See help for `cxapp::cxapp_log()` for further details.
+Note that a log file is only created when there is a message to record, which means 
+that there may be gaps in log rotations and that an error log may not exist when
+the main log does.
+
+See help for `cxapp::cxapp_log()` and `cxapp::cxapp_logerr()` for further details.
 
 <br/>
 
