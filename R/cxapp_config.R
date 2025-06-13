@@ -281,8 +281,8 @@ cxapp_config$methods( "option" = function( x, unset = NA, as.type = TRUE ) {
   
   
   #    note: the value starts with the character "$"
-  if ( base::startsWith( base::trimws(base::toupper(xvalue)), "$" ) ) {
-    
+  if ( base::grepl("^\\$.*", base::trimws(base::toupper(xvalue)), perl = TRUE ) ) {
+
     # note: start position 2 is character after $
     xref_name <- base::trimws( base::substring( base::trimws(xvalue), 2 ) )
     
