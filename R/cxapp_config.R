@@ -323,8 +323,8 @@ cxapp_config$methods( "option" = function( x, unset = NA, search.envars = TRUE, 
   if ( base::startsWith( base::trimws(base::toupper(xvalue)), "[VAULT]" ) ) {
 
     # - determine secret name
-    #   note: 
-    xref_name <- base::trimws( base::substring( base::trimws(xvalue), base::nahar( "[VAULT]") ) ) 
+    #   note: +1 to start substring after [vault]
+    xref_name <- base::trimws( base::substring( base::trimws(xvalue), base::nchar( "[VAULT]") + 1 ) ) 
 
     # connect to a vault
     vaultsvc <- cxapp::cxapp_vault()

@@ -77,7 +77,7 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
                                                            simplify = TRUE),
                                           collapse = "/" )
                                    , simplify = TRUE )
-  
+ 
   for ( xsecret in test_secrets ) {
     
     secrets_file <- file.path( test_vault_path, xsecret, fsep = "/" )
@@ -117,10 +117,14 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
   
   if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
     testthat::fail( "Could not stage app.properties" )
+
   
+  # -- configuration
+  test_obj <- cxapp::cxapp_config()
+    
 
   # -- test
-  result <- cxapp::cxapp_config()
+  result <- test_obj$option( test_reference_name, unset = NA, use.names = FALSE )
   
   
   # -- expected
@@ -131,7 +135,7 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
   
   
   # -- assertions
-  testthat::expect_equal( result$option( expected_name  ), expected_value )
+  testthat::expect_equal( result, expected_value )
   
 })
 
@@ -250,19 +254,16 @@ testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
     testthat::fail( "Could not stage app.properties" )
   
 
+  # -- configuration
+  test_obj <- cxapp::cxapp_config()
+  
+  
   # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- expected
-  
-  expected_name <- paste0( test_reference_name )
-  
-  expected_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" )
-  
-  
+  result <- test_obj$option( test_reference_name, unset = NA, use.names = FALSE )
+
+
   # -- assertions
-  testthat::expect_equal( result$option( expected_name, unset = expected_value  ), expected_value )
+  testthat::expect_true( is.na(result))
   
 })
 
