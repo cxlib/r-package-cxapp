@@ -1,17 +1,22 @@
 #
 #  test for cxapp::cxapp_config()
 #
-#  environmental variables
+#  Environmental variables
 #
 #
 
 
+#' @cx.testsfor cxapp::cxapp_config()
 
-testthat::test_that( "config.envPropFilePrecedence", {
+
+testthat::test_that( "config.envPropFilePrecedenceDefault", {
   
-  # -- stage
+  #' @cx.tests Property set by properties file takes precedence over resolved environmental variable
   
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -21,78 +26,173 @@ testthat::test_that( "config.envPropFilePrecedence", {
     testthat::fail("Could not create test area")
   
   
-  # update .libPaths
+  # - APP_HOME
   
-  current_libpaths <- .libPaths()
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_root, .libPaths() ) )
-  
-  
-  # test property value
-  test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
-  test_reference_propfile_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )
-  test_reference_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )
-  
-  if ( test_reference_propfile_value == test_reference_env_value )
-    testthat::fail( "Could not distinguish between property file and environmental variable value" )
-
+  on.exit({
     
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
-  
-  
-  # stage environmental variable 
-  
-  on.exit( {
-    Sys.unsetenv( test_reference_name )
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
   }, add = TRUE )
   
-  env_values <- as.list( test_reference_env_value )
-  names(env_values) <- test_reference_name
   
-  do.call( Sys.setenv, env_values )
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 1:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( base::sample( c( base::LETTERS, base::letters ), base::sample( 10:25, 1), replace = TRUE ), collapse = ""),
+                                               simplify = TRUE )
+  
+  
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  
+  # - stage property files
+  
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
+  
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
 
-  if ( Sys.getenv( test_reference_name, unset = NA ) != test_reference_env_value )
-    testthat::fail( "Could not stage environmental variable name" )
+  # -- environment variable 
+  #    note: using random name
+  
+  test_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 5:19, 1), replace = TRUE ), collapse = "")
+  base::names(test_env_value) <- base::sample(base::names(test_properties), 1)
+  
+  if ( ! is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Unexpected environmental variable is defined" )
+  
+  do.call( Sys.setenv, as.list(test_env_value) )
+  
+  on.exit({
+    Sys.unsetenv( base::names(test_env_value) )
+  }, add = TRUE )
+  
+  
+  if ( is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Staging environmental variable failed" )
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+
+  
+  # - configuration object
+  test_obj <- cxapp::cxapp_config()
   
   
   # -- test
-  result <- cxapp::cxapp_config()
-  
+  result <- test_obj$option( base::names(test_env_value), unset = NA )
+
   
   # -- expected
-
-  expected_value <- base::trimws( test_reference_propfile_value )
+  
+  expected_value <- test_properties[ base::names(test_env_value) ]
+  base::names(expected_value) <- base::tolower(base::names(expected_value))
   
   # -- assertions
-  testthat::expect_equal( result$option( test_reference_name), expected_value )
+  testthat::expect_equal( result, expected_value )
 
 })
 
 
 
 
-
-
-testthat::test_that( "config.envVar", {
+testthat::test_that( "config.envResolvesWithSSearchEnvarEnabled", {
   
-  # -- stage
+  #' @cx.tests Property resolved to environmental variable value with property not set and search environmental variables enabled
   
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -102,86 +202,180 @@ testthat::test_that( "config.envVar", {
     testthat::fail("Could not create test area")
   
   
-  # update .libPaths
+  # - APP_HOME
   
-  current_libpaths <- .libPaths()
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
-  on.exit( {
-    .libPaths( current_libpaths )
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
   }, add = TRUE )
   
-  .libPaths( c( test_root, .libPaths() ) )
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
   
   
-  # test property value
-  test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
-  test_reference_propfile_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )
-  test_reference_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
   
-  if ( test_reference_propfile_value == test_reference_env_value )
-    testthat::fail( "Could not distinguish between property file and environmental variable value" )
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
   
+  Sys.setenv( "APP_HOME" = test_apphome )
   
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
   
   
-  # stage environmental variable 
+  # - stage cxapp in .libPaths()
   
-  test_context <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
+  prev_libpath <- .libPaths()
   
-  test_env_name <- paste0( test_context, "_", test_reference_name )
-  
-  
-  on.exit( {
-    Sys.unsetenv( test_env_name )
+  on.exit({
+    .libPaths( prev_libpath )
   }, add = TRUE )
   
-  env_values <- as.list( test_reference_env_value )
-  names(env_values) <- test_env_name
   
-  do.call( Sys.setenv, env_values )
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
   
-  if ( Sys.getenv( test_env_name, unset = NA ) != test_reference_env_value )
-    testthat::fail( "Could not stage environmental variable name" )
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 1:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( base::sample( c( base::LETTERS, base::letters ), base::sample( 10:25, 1), replace = TRUE ), collapse = ""),
+                                               simplify = TRUE )
+  
+  
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  
+  # - stage property files
+  
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
+  
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
+  
+  # -- environment variable 
+  #    note: using random name
+  #    note: an environmental variable name look up is either on upper case or lower case
+  
+  test_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 5:19, 1), replace = TRUE ), collapse = "")
+  
+  test_env_name <- paste( base::sample( c( base::LETTERS, base::letters ), base::sample( c( 4:9, 26:30), 1), replace = TRUE ), collapse = "")
+  base::names(test_env_value) <- base::sample( c( base::tolower(test_env_name), base::toupper(test_env_name) ), 1 )
+  
+
+
+  if ( base::names(test_env_value) %in% base::names(test_properties) )
+    testthat::fail( "Random name exists as a property name")
+  
+  if ( ! is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Unexpected environmental variable is defined" )
+  
+  do.call( Sys.setenv, as.list(test_env_value) )
+  
+  on.exit({
+    Sys.unsetenv( base::names(test_env_value) )
+  }, add = TRUE )
+  
+  
+  if ( is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Staging environmental variable failed" )
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  
+  # - configuration object
+  test_obj <- cxapp::cxapp_config()
   
   
   # -- test
-  result <- cxapp::cxapp_config()
+  result <- test_obj$option( base::names(test_env_value), unset = NA )
   
   
   # -- expected
   
-  # note: properties file reference is cxapp/<test_reference_name>
-  # note: environmental variable reference is <test_context>/<test_reference_name>
-  expected_name <- paste0( test_context, "/", test_reference_name )
+  expected_value <- test_env_value
+  base::names(expected_value) <- base::tolower(base::names(expected_value))
   
-  expected_value <- base::trimws( test_reference_env_value )
-  
-
   # -- assertions
-  testthat::expect_equal( result$option( expected_name  ), expected_value )
-  
+  testthat::expect_equal( result, expected_value )
+
 })
 
 
 
-
-testthat::test_that( "config.propertyRedirectEnvVarEnvTag", {
+testthat::test_that( "config.envUnsetWithSSearchEnvarDisabled", {
   
-  # -- stage
+  #' @cx.tests Property not resolved to environmental variable value with property not set and search environmental variables disabled
   
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -191,81 +385,376 @@ testthat::test_that( "config.propertyRedirectEnvVarEnvTag", {
     testthat::fail("Could not create test area")
   
   
-  # update .libPaths
+  # - APP_HOME
   
-  current_libpaths <- .libPaths()
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
-  on.exit( {
-    .libPaths( current_libpaths )
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
   }, add = TRUE )
   
-  .libPaths( c( test_root, .libPaths() ) )
   
-
-  # stage environmental variable 
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
   
-  test_env_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 20 ), collapse = "" ) )
-  test_reference_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )
-
-  on.exit( {
-    Sys.unsetenv( test_env_name )
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
   }, add = TRUE )
   
-  env_values <- as.list( test_reference_env_value )
-  names(env_values) <- test_env_name
   
-  do.call( Sys.setenv, env_values )
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
   
-  if ( Sys.getenv( test_env_name, unset = NA ) != test_reference_env_value )
-    testthat::fail( "Could not stage environmental variable name" )
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
   
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 1:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( base::sample( c( base::LETTERS, base::letters ), base::sample( 10:25, 1), replace = TRUE ), collapse = ""),
+                                               simplify = TRUE )
+  
+  
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  
+  # - stage property files
+  
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
+  
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
+  
+  # -- environment variable 
+  #    note: using random name
+  #    note: an environmental variable name look up is either on upper case or lower case
+  
+  test_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 5:19, 1), replace = TRUE ), collapse = "")
+  
+  test_env_name <- paste( base::sample( c( base::LETTERS, base::letters ), base::sample( c( 4:9, 26:30), 1), replace = TRUE ), collapse = "")
+  base::names(test_env_value) <- base::sample( c( base::tolower(test_env_name), base::toupper(test_env_name) ), 1 )
+  
+  
+  
+  if ( base::names(test_env_value) %in% base::names(test_properties) )
+    testthat::fail( "Random name exists as a property name")
+  
+  if ( ! is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Unexpected environmental variable is defined" )
+  
+  do.call( Sys.setenv, as.list(test_env_value) )
+  
+  on.exit({
+    Sys.unsetenv( base::names(test_env_value) )
+  }, add = TRUE )
+  
+  
+  if ( is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Staging environmental variable failed" )
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  
+  # - configuration object
+  test_obj <- cxapp::cxapp_config()
+  
+  
+  # -- test
+  result <- test_obj$option( base::names(test_env_value), unset = NA, search.envars = FALSE )
+  
+  
+  # -- assertions
+
+  testthat::expect_true( is.na(result) )  
+  
+
+})
+
+
+
+
+
+testthat::test_that( "config.envRedirectWithEnvExists", {
+  
+  #' @cx.tests Property value reference to existing environmental variable resolved when environmental variable exists
+  
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
+  
+  on.exit({
+    base::unlink( test_root, recursive = TRUE, force = TRUE )
+  }, add = TRUE )
+  
+  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
+    testthat::fail("Could not create test area")
+  
+  
+  # - APP_HOME
+  
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
+  
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
+  }, add = TRUE )
+  
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  
+  # -- environment variable 
+  #    note: using random name
+  #    note: case sensitive reference
+  
+  test_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 5:19, 1), replace = TRUE ), collapse = "")
+  base::names(test_env_value) <- paste( base::sample( c( base::LETTERS, base::letters ), base::sample( c( 4:9, 26:30), 1), replace = TRUE ), collapse = "")
+
+  if ( ! is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Unexpected environmental variable is defined" )
+  
+  do.call( Sys.setenv, as.list(test_env_value) )
+  
+  on.exit({
+    Sys.unsetenv( base::names(test_env_value) )
+  }, add = TRUE )
+  
+  
+  if ( is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Staging environmental variable failed" )
+  
+  
+  
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 5:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( base::sample( c( base::LETTERS, base::letters ), base::sample( 10:25, 1), replace = TRUE ), collapse = ""),
+                                               simplify = TRUE )
+
+  # -- test property redirect
+  #    note: use two properties
+  #    note: first refers to "[env] <var>"
+  #    note: second refers to "$<var>"
+  
+  test_prop_envref <- base::sample( base::names(test_properties), 2 )
+  
+  test_properties[ test_prop_envref[1] ] <- paste0( "[env] ", base::names(test_env_value) )
+  test_properties[ test_prop_envref[2] ] <- paste0( "$", base::names(test_env_value) )
   
     
-  # test property value
-  test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
-  test_reference_propfile_value <- paste( "[env]", test_env_name )
   
-  if ( test_reference_propfile_value == test_reference_env_value )
-    testthat::fail( "Could not distinguish between property file and environmental variable value" )
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
   
   
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
+  # - stage property files
   
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
   
-  base::writeLines( c( "# test properties file", 
-                       paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
- 
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  
+  # - configuration object
+  test_obj <- cxapp::cxapp_config()
+  
+  
+  # -- test
+  results <- base::unlist(lapply( test_prop_envref, function(x) {
+    test_obj$option( x, unset = NA )
+  }))
   
 
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
   # -- expected
   
-  expected_name <- paste0( test_reference_name )
-  
-  expected_value <- base::trimws( test_reference_env_value )
+  expected_values <- rep_len( test_env_value, length(test_prop_envref) )
+  base::names(expected_values) <- base::tolower(test_prop_envref)
   
   
   # -- assertions
-  testthat::expect_equal( result$option( expected_name  ), expected_value )
+  
+  testthat::expect_equal( results[ base::sort(base::names(results)) ], expected_values[ base::sort(base::names(expected_values)) ] )
+
   
 })
 
 
 
-testthat::test_that( "config.propertyRedirectEnvVarEnvSymbol", {
+testthat::test_that( "config.envRedirectWithEnvNotExists", {
   
-  # -- stage
+  #' @cx.tests Property value reference to existing environmental variable resolved when environmental variable exists
   
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
   on.exit({
     base::unlink( test_root, recursive = TRUE, force = TRUE )
@@ -275,144 +764,194 @@ testthat::test_that( "config.propertyRedirectEnvVarEnvSymbol", {
     testthat::fail("Could not create test area")
   
   
-  # update .libPaths
+  # - APP_HOME
   
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_root, .libPaths() ) )
-  
-  
-  # stage environmental variable 
-  
-  test_env_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 20 ), collapse = "" ) )
-  test_reference_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )
-  
-  on.exit( {
-    Sys.unsetenv( test_env_name )
-  }, add = TRUE )
-  
-  env_values <- as.list( test_reference_env_value )
-  names(env_values) <- test_env_name
-  
-  do.call( Sys.setenv, env_values )
-  
-  if ( Sys.getenv( test_env_name, unset = NA ) != test_reference_env_value )
-    testthat::fail( "Could not stage environmental variable name" )
-  
-  
-  
-  # test property value
-  test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
-  test_reference_propfile_value <- paste0( "$", test_env_name )
-  
-  if ( test_reference_propfile_value == test_reference_env_value )
-    testthat::fail( "Could not distinguish between property file and environmental variable value" )
-  
-  
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
-  
-
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- expected
-  
-  expected_name <- paste0( test_reference_name )
-  
-  expected_value <- base::trimws( test_reference_env_value )
-  
-  
-  # -- assertions
-  testthat::expect_equal( result$option( expected_name  ), expected_value )
-  
-})
-
-
-
-
-
-testthat::test_that( "config.propertyRedirectEnvVarWithEnvVarNotExist", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
   on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
   }, add = TRUE )
   
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
   
   
-  # update .libPaths
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
   
-  current_libpaths <- .libPaths()
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
   
-  on.exit( {
-    .libPaths( current_libpaths )
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
   }, add = TRUE )
   
-  .libPaths( c( test_root, .libPaths() ) )
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
   
   
-  # stage environmental variable 
+  .libPaths( append( test_libpath, .libPaths() ) )
   
-  test_env_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 20 ), collapse = "" ) )
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  
+  # -- environment variable 
+  #    note: using random name
+  #    note: case sensitive reference
+  
+  test_env_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 5:19, 1), replace = TRUE ), collapse = "")
+  base::names(test_env_value) <- paste( base::sample( c( base::LETTERS, base::letters ), base::sample( c( 4:9, 26:30), 1), replace = TRUE ), collapse = "")
+  
+  if ( ! is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Unexpected environmental variable is defined" )
+  
+  do.call( Sys.setenv, as.list(test_env_value) )
+  
+  on.exit({
+    Sys.unsetenv( base::names(test_env_value) )
+  }, add = TRUE )
+  
+  
+  if ( is.na(Sys.getenv( base::names(test_env_value), unset = NA)) )
+    testthat::fail( "Staging environmental variable failed" )
+  
+  
+  
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 5:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( base::sample( c( base::LETTERS, base::letters ), base::sample( 10:25, 1), replace = TRUE ), collapse = ""),
+                                               simplify = TRUE )
+  
+  # -- test property redirect
+  #    note: use two properties
+  #    note: random environmental variable names that should not exist
+  #    note: first refers to "[env] <var>"
+  #    note: second refers to "$<var>"
+  
+  test_prop_envref <- base::sample(base::names(test_properties), 2)
+  test_prop_envnames <- replicate( 2, 
+                                   paste( base::sample( c( base::LETTERS, base::letters ), base::sample( 10:25, 1), replace = TRUE ), collapse = ""), 
+                                   simplify = TRUE )
 
-  if ( ! is.na(Sys.getenv( test_env_name, unset = NA )) )
-    testthat::fail( "Environmental variable exists unexpected" )
-  
-  
-  
-  # test property value
-  test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
-  test_reference_propfile_value <- paste0( "$", test_env_name )
+  if ( any( test_prop_envnames %in% base::names(Sys.getenv()) ) )
+    testthat::fail( "Unexpected random property name refers to an existing environmental variable" )
 
   
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
+  test_properties[ test_prop_envref[1] ] <- paste0( "[env] ", test_prop_envnames[1] )
+  test_properties[ test_prop_envref[2] ] <- paste0( "$", test_prop_envnames[2] )
   
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
   
-  base::writeLines( c( "# test properties file", 
-                       paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  
+  # - stage property files
+  
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
+  
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  
+  # - configuration object
+  test_obj <- cxapp::cxapp_config()
   
   
   # -- test
-  result <- cxapp::cxapp_config()
+  results <- base::unlist(lapply( test_prop_envref, function(x) {
+    test_obj$option( x, unset = NA )
+  }))
   
-  
+
   # -- expected
   
-  expected_name <- paste0( test_reference_name )
-  
-  expected_value <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" )
-  
+  expected_values <- rep_len( NA, length(test_prop_envref) )
+
   
   # -- assertions
-  testthat::expect_equal( result$option( expected_name, unset = expected_value ), expected_value )
+  
+  testthat::expect_equal( results[ base::sort(base::names(results)) ], expected_values[ base::sort(base::names(expected_values)) ] )
+  
   
 })
+
+
+
+
+
+
 

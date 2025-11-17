@@ -3,83 +3,457 @@
 #
 #
 
+#' @cx.testsfor cxapp::cxapp_config()
 
-testthat::test_that( "config.empty", {
+
+
+testthat::test_that( "config.configSearchTreeDefaults", {
+
+  #' @cx.tests Empty configuration with no property files results in no properties defined
+  #' @cx.tests Search sequence is APP_HOME/config, APP_HOME, cxapp install directory and current working directory
+    
+  
+  # -- stage 
+
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
+  
+  on.exit({
+    base::unlink( test_root, recursive = TRUE, force = TRUE )
+  }, add = TRUE )
+  
+  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
+    testthat::fail("Could not create test area")
+  
+  
+  # - APP_HOME
+  
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
+  
+  on.exit({
+
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+
+  }, add = TRUE )
+
+
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+
+
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+
+  Sys.setenv( "APP_HOME" = test_apphome )
+
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+
+
+  # - stage cxapp in .libPaths()
+
+  prev_libpath <- .libPaths()
+
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+
+
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+
+
+  .libPaths( append( test_libpath, .libPaths() ) )
+
+
+
+  # - current working directory
+
+  prev_wd <- base::getwd()
+
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+
+
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+
+  base::setwd( test_wd )
+
+
+  # - cached config
+
+  prev_cachedconfig <- NA
+
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+
+  on.exit({
+
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+
+  }, add = TRUE )
+
+
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+
+
+
+  # -- test
+  result <- cxapp::cxapp_config()
+
+
+  # -- expected
+
+  expected_searchtree <- c( file.path( test_apphome, "config", fsep = "/" ), 
+                            test_apphome, 
+                            file.path( test_libpath, "cxapp", fsep = "/"),
+                            test_wd )
+
+
+
+
+  # -- assertions
+
+  # - search tree
+  testthat::expect_equal( result$.attr[["search.tree"]], expected_searchtree )
+  
+  # - property files
+  testthat::expect_length( result$.attr[["property.files"]], 0 )
+
+})
+
+
+
+
+
+testthat::test_that( "config.configSearchTreePropFiles", {
+  
+  #' @cx.tests Property file process sequence defined by search tree
+
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
+  
+  on.exit({
+    base::unlink( test_root, recursive = TRUE, force = TRUE )
+  }, add = TRUE )
+  
+  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
+    testthat::fail("Could not create test area")
+  
+  
+  # - APP_HOME
+  
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
+  
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
+  }, add = TRUE )
+  
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # - stage property files
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  for ( xpath in test_srchtree ) 
+    base::writeLines( paste( paste0( "TEST.", as.character(match( xpath, test_srchtree ))), xpath, sep = "="), 
+                      con = file.path( xpath, paste0( "app", as.character(match( xpath, test_srchtree )), ".properties" ) ))  
+    
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  
+  
+  # -- test
+  result <- cxapp::cxapp_config()
+
+
+  # -- expected
+  
+  # - search tree
+  expected_searchtree <- test_srchtree
+  
+  # - property files
+  expected_propfiles <- lapply( expected_searchtree, function(x) {
+    
+    prop_fname <- file.path( x, paste0( "app", as.character(match( x, expected_searchtree)) , ".properties"), fsep = "/")
+    
+    list( "path" = prop_fname, 
+          "sha" = digest::digest( prop_fname, algo = "sha1", file = TRUE ) )
+  })
+  
+
+  
+  # -- assertions
+  
+  # - search tree
+  testthat::expect_equal( result$.attr[["search.tree"]], expected_searchtree )
+  
+  # - property files
+  testthat::expect_equal( result$.attr[["property.files"]], expected_propfiles )
+  
+})
+
+
+
+
+
+
+
+testthat::test_that( "config.configSearchTreePropFileRecursionDisabled", {
+  
+  #' @cx.tests Property file process sequence defined by search tree with property file recursion disabled
+  
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
+  
+  on.exit({
+    base::unlink( test_root, recursive = TRUE, force = TRUE )
+  }, add = TRUE )
+  
+  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
+    testthat::fail("Could not create test area")
+  
+  
+  # - APP_HOME
+  
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
+  
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
+  }, add = TRUE )
+  
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # - stage property files
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  test_propfname <- paste0( paste( sample( base::letters, 25), collapse = ""), ".properties" )
+  
+  for ( xpath in test_srchtree ) 
+    base::writeLines( paste( paste0( "TEST.", as.character(match( xpath, test_srchtree ))), xpath, sep = "="), 
+                      con = file.path( xpath, test_propfname ) )  
+  
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  
+  
+  # -- test
+  result <- cxapp::cxapp_config( recursive = FALSE )
  
   
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- assertions
-  testthat::expect_length( result[[".attr"]][[".internal"]][["property.files"]], 0 )
-   
-})
-
-
-
-testthat::test_that( "config.cxappConfigEmpty", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-  # - update .libPaths
-
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( test_lbpath, recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  # - inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_lbpath, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test library path area")
-  
-  base::writeLines( "# empty test properties file", con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
-  
-  
-  # -- test
-  result <- cxapp::cxapp_config()
-  
   
   # -- expected
-  expected_propfiles <- file.path( test_cxapp_path, "app.properties", fsep = "/")
+  
+  # - search tree
+  expected_searchtree <- test_srchtree
+  
+  # - property files
+  expected_propfiles <- lapply( utils::head( expected_searchtree, n = 1 ), function(x) {
+    
+    prop_fname <- file.path( x, test_propfname, fsep = "/")
+    
+    list( "path" = prop_fname, 
+          "sha" = digest::digest( prop_fname, algo = "sha1", file = TRUE ) )
+  })
+  
   
   
   # -- assertions
-  testthat::expect_equal( result[[".attr"]][[".internal"]][["property.files"]], expected_propfiles )
-
+  
+  # - search tree
+  testthat::expect_equal( result$.attr[["search.tree"]], expected_searchtree )
+  
+  # - property files
+  testthat::expect_equal( result$.attr[["property.files"]], expected_propfiles )
+  
 })
 
 
 
 
-
-testthat::test_that( "config.cxappSimpleConfigSingle", {
+testthat::test_that( "config.configSearchTreePropFileRecursionEnabled", {
   
-  # -- stage
+  #' @cx.tests Property file process sequence defined by search tree with property file recursion enabled
+  
+  
+  # -- stage 
   
   test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
@@ -89,468 +463,162 @@ testthat::test_that( "config.cxappSimpleConfigSingle", {
   
   if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
     testthat::fail("Could not create test area")
-  
-  
-  # - update .libPaths
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( test_lbpath, recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  # - test property value
-  test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
-  test_reference_value <- base::trimws(paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" ))
-  
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_lbpath, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test library path area")
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( test_reference_name, test_reference_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
-  
-  
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- expected
-  expected_propfiles <- file.path( test_cxapp_path, "app.properties", fsep = "/")
-  
-  expected_props <- base::trimws(test_reference_value)
-  names(expected_props) <- base::tolower(test_reference_name)
-  
-  expected_attr <- list( ".internal" = list( "property.files" = expected_propfiles ),
-                         "app" = expected_props ) 
-  
-
-  # -- assertions
-  testthat::expect_equal( result$.attr, expected_attr )
-
-  
-    
-})
-
-
-
-testthat::test_that( "config.cxappSimpleConfigMultiple", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-  # - update .libPaths
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( test_lbpath, recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  # - test property value
-  test_reference_names <- utils::head( base::replicate( 1000, 
-                                                        base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) ),
-                                                        simplify = TRUE ),
-                                       n = 10 )
-
-  if ( length(unique(test_reference_names)) != length(test_reference_names) )
-    testthat::fail( "Could not generate 10 unique names" )
-
-  test_reference_values <- base::replicate( 10, 
-                                            base::trimws( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" ) ), 
-                                            simplify = TRUE )
-  
-  
-  # - inject app properties file in .libPaths
-  test_cxapp_path <- file.path( test_lbpath, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( sort(test_reference_names), test_reference_values, sep = " = " )),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app.properties" )
-  
-  
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- expected
-  expected_propfiles <- file.path( test_cxapp_path, "app.properties", fsep = "/")
-  
-  expected_props <- base::trimws(test_reference_values)
-  names(expected_props) <- base::tolower(sort(test_reference_names))
-  
-  expected_attr <- list( ".internal" = list( "property.files" = expected_propfiles ),
-                         "app" = expected_props ) 
-  
-  
-  # -- assertions
-  testthat::expect_equal( result$.attr, expected_attr )
-  
-})
-
-
-
-testthat::test_that( "config.cxappSimpleConfigMultipleFirstOccurenceWd", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-  # - test property name
-  test_referene_name <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 25 ), collapse = "" )
-  
-  
-  # - test property values
-
-  test_reference_levels <- c( "working.directory", "app.home.config", "app.home", "library.path" )
-    
-  test_reference_values <-   base::replicate( length(test_reference_levels), 
-                                              base::trimws(paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )), 
-                                              simplify = TRUE )
-  
-  names(test_reference_values) <- test_reference_levels
-  
-
-  # - test working directory
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-working-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_wd ) || ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage test working directory" )
-
-  
-  current_wd <- base::getwd()
-  
-  on.exit( {
-    base::setwd( current_wd )
-  }, add = TRUE )
-  
-  base::setwd( test_wd )
-    
-  
-  base::writeLines( c( "# working directory properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["working.directory"] ) ), 
-                    con = file.path( test_wd, "app.properties") )
-  
-
-  if ( ! file.exists( file.path( test_wd, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test working directory" )
-  
   
   
   # - APP_HOME
-
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
   
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
-
-  
-  test_apphome_name <- "APP_HOME"
-
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
   on.exit({
     
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
-
-  }, add = TRUE )
-
-  names(test_apphome) <- test_apphome_name
-  
-  do.call( Sys.setenv, as.list(test_apphome) )
-
-
-  
-  base::writeLines( c( "# app home config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["app.home.config"] ) ), 
-                    con = file.path( test_apphome, "config", "app.properties", fsep = "/" ) )
-
-  if ( ! file.exists( file.path( test_apphome, "config", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test app home config directory" )
-  
-  
-  
-  base::writeLines( c( "# app home config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["app.home"] ) ), 
-                    con = file.path( test_apphome, "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_apphome, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test app home config directory" )
-  
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
     
-  
-  # - test library path
-    
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
   }, add = TRUE )
   
-  .libPaths( c( test_lbpath, .libPaths() ) )
   
-
-  base::writeLines( c( "# library path config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["library.path"] ) ), 
-                    con = file.path( test_lbpath, "cxapp",  "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test library path directory" )
-
-  
-  # - test config
-  
-  test_cfg <- cxapp::cxapp_config()
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
   
   
-  # -- test
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
   
-  result <- test_cfg$option( test_referene_name, unset = NA )
-
-
-  # -- expected
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
   
-  # - expected value
-  expected_value <- unname(test_reference_values[ "working.directory" ])
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
   
   
+  # - stage cxapp in .libPaths()
   
-  # -- assertions
-  
-  testthat::expect_equal( result, expected_value )
-
-
-})
-
-
-
-
-testthat::test_that( "config.cxappSimpleConfigMultipleFirstOccurenceAppHomeConfig", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
+  prev_libpath <- .libPaths()
   
   on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
+    .libPaths( prev_libpath )
   }, add = TRUE )
   
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
   
   
-  # - test property name
-  test_referene_name <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 25 ), collapse = "" )
+  .libPaths( append( test_libpath, .libPaths() ) )
   
   
-  # - test property values
   
-  test_reference_levels <- c( "working.directory", "app.home.config", "app.home", "library.path" )
+  # - current working directory
   
-  test_reference_values <-   base::replicate( length(test_reference_levels), 
-                                              base::trimws(paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )), 
-                                              simplify = TRUE )
+  prev_wd <- base::getwd()
   
-  names(test_reference_values) <- test_reference_levels
-  
-  
-  # - test working directory
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-working-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_wd ) || ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage test working directory" )
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
   
   
-  current_wd <- base::getwd()
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
   
-  on.exit( {
-    base::setwd( current_wd )
-  }, add = TRUE )
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
   
   base::setwd( test_wd )
   
   
-  # base::writeLines( c( "# working directory properties file", 
-  #                      paste0( test_referene_name, "=", test_reference_values["working.directory"] ) ), 
-  #                   con = file.path( test_wd, "app.properties") )
-
-  if ( file.exists( file.path( test_wd, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Unexpected app.properties in test working directory" )
+  # - stage property files
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  test_propfname <- paste0( paste( sample( base::letters, 25), collapse = ""), ".properties" )
+  
+  for ( xpath in test_srchtree ) 
+    base::writeLines( paste( paste0( "TEST.", as.character(match( xpath, test_srchtree ))), xpath, sep = "="), 
+                      con = file.path( xpath, test_propfname ) )  
   
   
   
-  # - APP_HOME
   
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
+  # - cached config
   
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
+  prev_cachedconfig <- NA
   
-  
-  test_apphome_name <- "APP_HOME"
-  
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
   
   on.exit({
     
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
     
   }, add = TRUE )
   
-  names(test_apphome) <- test_apphome_name
   
-  do.call( Sys.setenv, as.list(test_apphome) )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
   
-  
-  
-  base::writeLines( c( "# app home config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["app.home.config"] ) ), 
-                    con = file.path( test_apphome, "config", "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_apphome, "config", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test app home config directory" )
-  
-  
-  
-  base::writeLines( c( "# app home config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["app.home"] ) ), 
-                    con = file.path( test_apphome, "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_apphome, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test app home config directory" )
-  
-  
-  
-  # - test library path
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  base::writeLines( c( "# library path config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["library.path"] ) ), 
-                    con = file.path( test_lbpath, "cxapp",  "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test library path directory" )
-  
-  
-  # - test config
-  
-  test_cfg <- cxapp::cxapp_config()
   
   
   # -- test
+  result <- cxapp::cxapp_config( recursive = TRUE )
   
-  result <- test_cfg$option( test_referene_name, unset = NA )
-  
+
   
   # -- expected
   
-  # - expected value
-  expected_value <- unname(test_reference_values[ "app.home.config" ])
+  # - search tree
+  expected_searchtree <- test_srchtree
+  
+  # - property files
+  expected_propfiles <- lapply( expected_searchtree, function(x) {
+    
+    prop_fname <- file.path( x, test_propfname, fsep = "/")
+    
+    list( "path" = prop_fname, 
+          "sha" = digest::digest( prop_fname, algo = "sha1", file = TRUE ) )
+  })
   
   
+  expected_props <-list()
   
+  for ( xpath in expected_searchtree ) 
+    expected_props[[ paste0( "test.", as.character(match(xpath, expected_searchtree)))  ]] <- xpath
+    
+  
+
   # -- assertions
   
-  testthat::expect_equal( result, expected_value )
+  # - search tree
+  testthat::expect_equal( result$.attr[["search.tree"]], expected_searchtree )
   
+  # - property files
+  testthat::expect_equal( result$.attr[["property.files"]], expected_propfiles )
+  
+  # - properties
+  testthat::expect_equal( result$.attr[["properties"]][ base::sort(base::names(result$.attr[["properties"]])) ], expected_props[ base::sort(base::names(expected_props)) ] )
   
 })
-
-
-
-
-testthat::test_that( "config.cxappSimpleConfigMultipleFirstOccurenceAppHome", {
   
-  # -- stage
+
+
+
+
+
+testthat::test_that( "config.configSearchTreeAppPropFilePrecedenceRecursionEnabled", {
+  
+  #' @cx.tests Property file app.properties takes precedence when other property file are present and recursion enabled
+  
+  
+  # -- stage 
   
   test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
@@ -562,881 +630,163 @@ testthat::test_that( "config.cxappSimpleConfigMultipleFirstOccurenceAppHome", {
     testthat::fail("Could not create test area")
   
   
-  # - test property name
-  test_referene_name <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 25 ), collapse = "" )
+  # - APP_HOME
   
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
-  # - test property values
-  
-  test_reference_levels <- c( "working.directory", "app.home.config", "app.home", "library.path" )
-  
-  test_reference_values <-   base::replicate( length(test_reference_levels), 
-                                              base::trimws(paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )), 
-                                              simplify = TRUE )
-  
-  names(test_reference_values) <- test_reference_levels
-  
-  
-  # - test working directory
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-working-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_wd ) || ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage test working directory" )
-  
-  
-  current_wd <- base::getwd()
-  
-  on.exit( {
-    base::setwd( current_wd )
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
   }, add = TRUE )
+  
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
   
   base::setwd( test_wd )
   
   
-  # base::writeLines( c( "# working directory properties file", 
-  #                      paste0( test_referene_name, "=", test_reference_values["working.directory"] ) ), 
-  #                   con = file.path( test_wd, "app.properties") )
+  # - stage property files
   
-  if ( file.exists( file.path( test_wd, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Unexpected app.properties in test working directory" )
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+
+  test_propfname <- paste0( paste( sample( base::letters, 25), collapse = ""), ".properties" )
+
+  # note: force a natural sort order for property files
+  test_propfileset <- c( paste0( "aaaaaaaaaaaaa", test_propfname),
+                         paste0( "aaaaaabbbbbbb", test_propfname), 
+                         "app.properties" )
+
+
+  for ( xpath in test_srchtree )
+    for ( xfile in test_propfileset )
+      base::writeLines( paste( paste0( "TEST.", as.character(match( xpath, test_srchtree ))), file.path( xpath, xfile, fsep = "/" ), sep = "="), 
+                        con = file.path( xpath, xfile, fsep = "/" ) )  
   
   
+
   
-  # - APP_HOME
+  # - cached config
   
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
+  prev_cachedconfig <- NA
   
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
-  
-  
-  test_apphome_name <- "APP_HOME"
-  
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
   
   on.exit({
     
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
     
   }, add = TRUE )
   
-  names(test_apphome) <- test_apphome_name
   
-  do.call( Sys.setenv, as.list(test_apphome) )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
   
-  
-  
-  # base::writeLines( c( "# app home config properties file", 
-  #                      paste0( test_referene_name, "=", test_reference_values["app.home.config"] ) ), 
-  #                   con = file.path( test_apphome, "config", "app.properties", fsep = "/" ) )
-  
-  if ( file.exists( file.path( test_apphome, "config", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Unexpected app.properties in test app home config directory" )
-  
-  
-  
-  base::writeLines( c( "# app home config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["app.home"] ) ), 
-                    con = file.path( test_apphome, "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_apphome, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test app home config directory" )
-  
-  
-  
-  # - test library path
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  base::writeLines( c( "# library path config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["library.path"] ) ), 
-                    con = file.path( test_lbpath, "cxapp",  "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test library path directory" )
-  
-  
-  # - test config
-  
-  test_cfg <- cxapp::cxapp_config()
   
   
   # -- test
-  
-  result <- test_cfg$option( test_referene_name, unset = NA )
-  
-  
-  # -- expected
-  
-  # - expected value
-  expected_value <- unname(test_reference_values[ "app.home" ])
-  
-  
-  
-  # -- assertions
-  
-  testthat::expect_equal( result, expected_value )
-  
-  
-})
-
-
-
-
-testthat::test_that( "config.cxappSimpleConfigMultipleFirstOccurenceLibraryPath", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-  # - test property name
-  test_referene_name <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 25 ), collapse = "" )
-  
-  
-  # - test property values
-  
-  test_reference_levels <- c( "working.directory", "app.home.config", "app.home", "library.path" )
-  
-  test_reference_values <-   base::replicate( length(test_reference_levels), 
-                                              base::trimws(paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" )), 
-                                              simplify = TRUE )
-  
-  names(test_reference_values) <- test_reference_levels
-  
-  
-  # - test working directory
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-working-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_wd ) || ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage test working directory" )
-  
-  
-  current_wd <- base::getwd()
-  
-  on.exit( {
-    base::setwd( current_wd )
-  }, add = TRUE )
-  
-  base::setwd( test_wd )
-  
-  
-  # base::writeLines( c( "# working directory properties file", 
-  #                      paste0( test_referene_name, "=", test_reference_values["working.directory"] ) ), 
-  #                   con = file.path( test_wd, "app.properties") )
-  
-  if ( file.exists( file.path( test_wd, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Unexpected app.properties in test working directory" )
-  
-  
-  
-  # - APP_HOME
-  
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
-  
-  
-  test_apphome_name <- "APP_HOME"
-  
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
-  
-  on.exit({
-    
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
-    
-  }, add = TRUE )
-  
-  names(test_apphome) <- test_apphome_name
-  
-  do.call( Sys.setenv, as.list(test_apphome) )
-  
-  
-  
-  # base::writeLines( c( "# app home config properties file", 
-  #                      paste0( test_referene_name, "=", test_reference_values["app.home.config"] ) ), 
-  #                   con = file.path( test_apphome, "config", "app.properties", fsep = "/" ) )
-  
-  if ( file.exists( file.path( test_apphome, "config", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Unexpected app.properties in test app home config directory" )
-  
-  
-  
-  # base::writeLines( c( "# app home config properties file", 
-  #                      paste0( test_referene_name, "=", test_reference_values["app.home"] ) ), 
-  #                   con = file.path( test_apphome, "app.properties", fsep = "/" ) )
-  
-  if ( file.exists( file.path( test_apphome, "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Unexpected app.properties in test app home config directory" )
-  
-  
-  
-  # - test library path
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  base::writeLines( c( "# library path config properties file", 
-                       paste0( test_referene_name, "=", test_reference_values["library.path"] ) ), 
-                    con = file.path( test_lbpath, "cxapp",  "app.properties", fsep = "/" ) )
-  
-  if ( ! file.exists( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/" ) ) )
-    testthat::fail( "Could not stage app.properties in test library path directory" )
-  
-  
-  # - test config
-  
-  test_cfg <- cxapp::cxapp_config()
-  
-  
-  # -- test
-  
-  result <- test_cfg$option( test_referene_name, unset = NA )
- 
-  
-  # -- expected
-  
-  # - expected value
-  expected_value <- unname(test_reference_values[ "library.path" ])
-  
-  
-  
-  # -- assertions
-  
-  testthat::expect_equal( result, expected_value )
-  
-  
-})
-
-
-
-
-
-testthat::test_that( "config.appSingleFile", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-  
-  # - test library path
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  
-  # - test property values
-  
-  test_property_contexts <- c( "app", 
-                               paste( base::sample( c( base::letters, base::letters, as.character(0:9) ), 10 ), collapse = "" ) )
-  
-  
-  test_property_values <- list()
-  
-  for ( xcontext in test_property_contexts ) {
-    
-    context_values <- base::replicate( 10, 
-                                       base::trimws( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" ) ), 
-                                       simplify = TRUE )
-    
-    names(context_values) <- sort(base::replicate( 10, 
-                                              paste( base::sample( c( base::letters, base::letters, as.character(0:9) ), 15 ), collapse = "" ) , 
-                                              simplify = TRUE ))
-    
-    test_property_values[[ xcontext ]] <- context_values
-  }
-  
-
-    
-  # - inject app properties file in .libPaths
-
-  prop_lines <- sapply( names(test_property_values[["app"]]), function(x) {
-    paste( base::toupper(x), test_property_values[["app"]][x], sep = " = " )
-  }, USE.NAMES = FALSE )
-  
-
-  base::writeLines( c( "# test properties file",
-                       prop_lines ),
-                    con = file.path( test_lbpath, "cxapp", "app.properties", fsep = "/") )
-
-  if ( ! file.exists( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app properties file" )
-
-  rm ( list = "prop_lines" )
-  
-  
-  # - inject properties in file
-  #   note: using random context
-  
-  prop_context <- names(test_property_values[ names(test_property_values) != "app" ])
-  
-  prop_lines <- sapply( names(test_property_values[[prop_context]]), function(x) {
-    paste( base::toupper(x), test_property_values[[prop_context]][x], sep = " = " )
-  }, USE.NAMES = FALSE )
-
-  
-  test_prop_file <- file.path( test_root, paste0( prop_context, ".properties" ), fsep = "/" )
-
-  base::writeLines( c( "# test properties file",
-                       prop_lines ),
-                    con = test_prop_file )
-
-  if ( ! file.exists( test_prop_file ) )
-    testthat::fail( "Could not stage properties file" )
-
-
-
-  # -- test
-  result <- cxapp::cxapp_config( test_prop_file )
-
+  result <- cxapp::cxapp_config( recursive = TRUE )
   
 
   # -- expected
   
-  expected_context <- names(test_property_values[ names(test_property_values) != "app" ])
+  # - search tree
+  expected_searchtree <- test_srchtree
   
-  expected_attr <- list( list( "property.files" = c( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/" ),
-                                                     file.path( test_root, paste0( expected_context, ".properties"), fsep = "/" ) ) ),
-                         test_property_values[["app"]],
-                         test_property_values[[expected_context]] )
   
-  names(expected_attr) <- c( ".internal", "app", expected_context )
-                         
+  # - property files
+  
+  expected_propfileseq <- character(0)
+  
+  for ( xpath in expected_searchtree ) {
 
-  
-  # -- assertions
-  
-  testthat::expect_equal( result$.attr, expected_attr )
-                       
-
-})
-
-
-
-
-
-testthat::test_that( "config.cxappSingleDir", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-
-  
-  # - test library path
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-  
-  # - test property values
-  
-  test_property_contexts <- c( "app", 
-                               replicate( 10, 
-                                          paste( base::sample( c( base::letters, base::letters, as.character(0:9) ), 10 ), collapse = "" ), 
-                                          simplify = TRUE ) )
-  
-  
-  test_property_values <- list()
-  
-  for ( xcontext in test_property_contexts ) {
+    expected_propfileseq <- append( expected_propfileseq, file.path( xpath, "app.properties", fsep = "/" ) )
     
-    context_values <- base::replicate( 10, 
-                                       base::trimws( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" ) ), 
-                                       simplify = TRUE )
-    
-    names(context_values) <- sort(base::replicate( 10, 
-                                                   paste( base::sample( c( base::letters, base::letters, as.character(0:9) ), 15 ), collapse = "" ) , 
-                                                   simplify = TRUE ))
-    
-    test_property_values[[ xcontext ]] <- context_values
+    for ( xfile in base::sort(test_propfileset[ test_propfileset != "app.properties" ]) )
+      expected_propfileseq <- append( expected_propfileseq, file.path( xpath, xfile, fsep = "/" ) )
   }
   
   
+  expected_propfiles <- lapply( expected_propfileseq, function(x) {
+    list( "path" = x, 
+          "sha" = digest::digest( x, algo = "sha1", file = TRUE ) )
+  })
   
   
-  # - APP_HOME
+  expected_props <-list()
   
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
-  
-  
-  test_apphome_name <- "APP_HOME"
-  
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
-  
-  on.exit({
-    
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
-    
-  }, add = TRUE )
-  
-  names(test_apphome) <- test_apphome_name
-  
-  do.call( Sys.setenv, as.list(test_apphome) )
-  
-
-  
-  # - stage test config   
-  
-  for ( xcontext in test_property_contexts ) {
-    
-    prop_lines <- sapply( names(test_property_values[[xcontext]]), function(x) {
-      paste( base::toupper(x), test_property_values[[xcontext]][x], sep = " = " )
-    }, USE.NAMES = FALSE )
-    
-    
-    test_prop_file <- file.path( test_apphome, "config", paste0( xcontext, ".properties" ), fsep = "/" )
-    
-    base::writeLines( c( "# test properties file",
-                         prop_lines ),
-                      con = test_prop_file )
-    
-    if ( ! file.exists( test_prop_file ) )
-      testthat::fail( "Could not stage properties file" )    
-    
-  }
-  
-
-  
-  # -- test
-  
-  result <- cxapp::cxapp_config()
-
-  
-  
-  # -- expected
-  
-  expected_contexts <- c( "app", 
-                          sort(test_property_contexts[ test_property_contexts != "app" ]) )
-
-  expected_propfiles <- file.path( test_apphome, "config", paste0( expected_contexts, ".properties"), fsep = "/" ) 
-  
-  
-  
-  expected_attr <- list( ".internal" = list( "property.files" = expected_propfiles ) )
-  
-  for ( xcontext in expected_contexts )
-    expected_attr[[xcontext]] <- test_property_values[[xcontext]]
-  
-
-  # -- assertions
-  
-  testthat::expect_equal( result$.attr, expected_attr )
-
-  
-  
-})
-
-
-
-
-
-
-testthat::test_that( "config.configOptionFullReferenceTyped", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-
-  # - test library path
-  
-  test_lbpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libary-path-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_lbpath ) || ! dir.create( file.path( test_lbpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail("Could not stage test library path")
-  
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_lbpath, .libPaths() ) )
-  
-  
-
-  
-  # - test property values
-  
-  test_property_contexts <- c( "app", 
-                               paste( base::sample( c( base::letters, base::letters, as.character(0:9) ), 10 ), collapse = "" ) )
-  
-  
-  test_property_values <- list()
-  
-  for ( xcontext in test_property_contexts ) {
-    
-    context_values <- base::replicate( 10, 
-                                       base::trimws( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9), base::rep_len( " ", 5) ), 40 ), collapse = "" ) ), 
-                                       simplify = TRUE )
-    
-    names(context_values) <- sort(base::replicate( 10, 
-                                                   paste( base::sample( c( base::letters, base::letters, as.character(0:9) ), 15 ), collapse = "" ) , 
-                                                   simplify = TRUE ))
-    
-    test_property_values[[ xcontext ]] <- context_values
-  }
-  
-  
-
-  test_property_refs <- gsub( "\\.", "/", names(unlist(test_property_values)) )
-
-
-    
-  # - inject app properties file in .libPaths
-  
-  prop_lines <- sapply( names(test_property_values[["app"]]), function(x) {
-    paste( base::toupper(x), test_property_values[["app"]][x], sep = " = " )
-  }, USE.NAMES = FALSE )
-  
-  
-  base::writeLines( c( "# test properties file",
-                       prop_lines ),
-                    con = file.path( test_lbpath, "cxapp", "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_lbpath, "cxapp", "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app properties file" )
-  
-  rm ( list = "prop_lines" )
-  
-  
-  # - inject properties in file
-  #   note: using random context
-  
-  prop_context <- names(test_property_values[ names(test_property_values) != "app" ])
-  
-  prop_lines <- sapply( names(test_property_values[[prop_context]]), function(x) {
-    paste( base::toupper(x), test_property_values[[prop_context]][x], sep = " = " )
-  }, USE.NAMES = FALSE )
-  
-  
-  test_prop_file <- file.path( test_root, paste0( prop_context, ".properties" ), fsep = "/" )
-  
-  base::writeLines( c( "# test properties file",
-                       prop_lines ),
-                    con = test_prop_file )
-  
-  if ( ! file.exists( test_prop_file ) )
-    testthat::fail( "Could not stage properties file" )
-  
-
-  # - test config
-  
-  test_config <- cxapp::cxapp_config( test_prop_file )
-  
-  
-  # -- test
-
-  results <- character(0)
-  
-  for ( xitem in test_property_refs )
-    results[[xitem]] <- test_config$option( xitem, as.type = TRUE )
-
-
-  # -- expected
-  
-  expected_values <- unlist( test_property_values )
-  names(expected_values) <- gsub( "\\.", "/", names(expected_values) )
+  for ( xpath in expected_searchtree ) 
+    expected_props[[ paste0( "test.", as.character(match(xpath, expected_searchtree)))  ]] <- file.path( xpath, "app.properties", fsep = "/" )
   
   
   
   # -- assertions
   
-  testthat::expect_equal( results, expected_values )
-
+  # - search tree
+  testthat::expect_equal( result$.attr[["search.tree"]], expected_searchtree )
+  
+  # - property files
+  testthat::expect_equal( result$.attr[["property.files"]], expected_propfiles )
+  
+  # - properties
+  testthat::expect_equal( result$.attr[["properties"]][ base::sort(base::names(result$.attr[["properties"]])) ], expected_props[ base::sort(base::names(expected_props)) ] )
   
 })
-
-
-
-
-# <---------------------------------------
-
-
-testthat::test_that( "config.configOptionTypeEnabled", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-
-  
-  # update .libPaths
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_root, .libPaths() ) )
-  
-  
-  # test property values
-  
-  test_values <- c( "enable", "enabled", "grant", "permit" )
-
-  test_names <- base::toupper( paste0( "test", test_values ) )
-
-    
-
-
-
-  # inject cxapp properties file in .libPaths
-  test_cxapp_libpath <- file.path( test_root, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_libpath ) && ! dir.create( test_cxapp_libpath, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( test_names, test_values, sep = " = ") ),
-                    con = file.path( test_cxapp_libpath, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_libpath, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage app properties file" )
-  
-  
-  
-  
-
-  
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- expected
-  
-  expected_names <- test_names
-  
-  expected_values <- base::rep_len( TRUE, length(expected_names) )
-  
-  
-  
-  # -- assertions
-
-  actual_values <- base::rep_len( NA, length(expected_names) )
-  names(actual_values) <- expected_names
-  
-  for ( xitem in expected_names )
-    actual_values[ xitem ] <- result$option( xitem, as.type = TRUE )
-  
-  
-  testthat::expect_true( all( actual_values ) )
-
-})
-
-
-
-testthat::test_that( "config.configOptionTypeDisabled", {
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-  
-  
-  
-  
-  # update .libPaths
-  
-  current_libpaths <- .libPaths()
-  
-  on.exit( {
-    .libPaths( current_libpaths )
-  }, add = TRUE )
-  
-  .libPaths( c( test_root, .libPaths() ) )
-  
-  
-  # test property values
-  
-  test_values <- c( "disable", "disabled", "revoke", "deny" )
-  
-  test_names <- base::toupper( paste0( "test", test_values ) )
-  
-  
-  
-  
-  
-  # inject cxapp properties file in .libPaths
-  test_cxapp_libpath <- file.path( test_root, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_libpath ) && ! dir.create( test_cxapp_libpath, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
-  
-  base::writeLines( c( "# test properties file", 
-                       paste( test_names, test_values, sep = " = ") ),
-                    con = file.path( test_cxapp_libpath, "app.properties", fsep = "/") )
-  
-  if ( ! file.exists( file.path( test_cxapp_libpath, "app.properties", fsep = "/") ) )
-    testthat::fail( "Could not stage cxapp properties file" )
-  
-  
-  
-  
-  
-  
-  # -- test
-  result <- cxapp::cxapp_config()
-  
-  
-  # -- expected
-  
-  expected_names <- test_names
-  
-  expected_values <- base::rep_len( TRUE, length(expected_names) )
-  
-  
-  
-  # -- assertions
-  
-  actual_values <- base::rep_len( NA, length(expected_names) )
-  names(actual_values) <- expected_names
-  
-  for ( xitem in expected_names )
-    actual_values[ xitem ] <- result$option( xitem, as.type = TRUE )
-  
-  
-  testthat::expect_false( any( actual_values ) )
-  
-})
-
-
-
-
-
 
 
