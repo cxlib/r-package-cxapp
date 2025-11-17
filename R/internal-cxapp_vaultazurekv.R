@@ -70,7 +70,7 @@
   
   
   # -- configuration
-  cfg <- cxapp::.cxappconfig()
+  cfg <- cxapp::cxapp_config()
   
   if ( base::toupper( cfg$option( "vault", unset = "unknown" ) != "AZUREKV" ) )
     stop( "Vault configuration is not Azure Key Vault" )

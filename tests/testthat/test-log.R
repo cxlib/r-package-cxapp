@@ -873,3 +873,4 @@ testthat::test_that( "log.configLogPathExistDefaultLogRotateInvalid", {
   
   
 })
+

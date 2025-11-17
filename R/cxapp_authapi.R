@@ -53,7 +53,7 @@ cxapp_authapi <- function( x ) {
 
 
   # - connect configuration object
-  cfg <- cxapp::.cxappconfig()
+  cfg <- cxapp::cxapp_config()
 
 
   # -- bearer token
@@ -109,7 +109,7 @@ cxapp_authapi <- function( x ) {
 
       # - secrets in vault
       #   note: NA means no list of secrets to check against
-      cfg_secrets_opt <- try( cfg$option( "app/api.auth.secrets", unset = NA ), silent = FALSE )
+      cfg_secrets_opt <- try( cfg$option( "api.auth.secrets", unset = NA ), silent = FALSE )
 
       if ( inherits( cfg_secrets_opt, "try-error") || is.na(cfg_secrets_opt) )
         return(invisible(FALSE))

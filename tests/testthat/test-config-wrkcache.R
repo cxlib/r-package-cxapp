@@ -1,108 +1,20 @@
 #
-#  Tests for cxapp::.cxappconfig()
+#  tests for cxapp::cxapp_config()
+#  
+#  Configuration cache
 #
-#
-#
-#
 
-testthat::test_that( "appconfig.emptyConfig", {
-  
-  
-  # -- stage
-  
-  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
-  
-  on.exit({
-    base::unlink( test_root, recursive = TRUE, force = TRUE )
-  }, add = TRUE )
-  
-  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
-    testthat::fail("Could not create test area")
-
-  
-  
-  # - stash current config
-  
-  current_appconfig <- NA
-  
-  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    current_appconfig <- base::get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
-  
-  
-  on.exit( {
-
-    if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-
-    if ( inherits( current_appconfig, "cxapp_config" ) )
-      assign( ".cxapp.wrkcache.config", current_appconfig, envir = .GlobalEnv )
-
-  }, add = TRUE )
-
-  
-  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-
-  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    testthat::fail( "Could not stash current app config" )
-    
-
-  
-  # - stash current APP_HOME
-  
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
-  
-  
-  test_apphome_name <- "APP_HOME"
-  
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
-  
-  on.exit({
-    
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
-    
-  }, add = TRUE )
-  
-  names(test_apphome) <- test_apphome_name
-  
-  do.call( Sys.setenv, as.list(test_apphome) )
-  
-
-
-  # -- test
-  
-  result <- cxapp::.cxappconfig()
-
-  
-  
-  # -- assertions
-  
-  testthat::expect_true( inherits( result, "cxapp_config" ) )
-  testthat::expect_true( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-
-})
+#' @cx.testsfor cxapp::cxapp_config()
 
 
 
 
-
-testthat::test_that( "appconfig.globalConfig", {
+testthat::test_that( "config.cacheDefault", {
+  
+  #' @cx.tests Configuration work cache is enabled by default
   
   
-  # -- stage
+  # -- stage 
   
   test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
   
@@ -114,138 +26,408 @@ testthat::test_that( "appconfig.globalConfig", {
     testthat::fail("Could not create test area")
   
   
+  # - APP_HOME
   
-  
-  # - stash current config
-  
-  current_appconfig <- NA
-  
-  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    current_appconfig <- base::get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
-  
-  
-  on.exit( {
-    
-    if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-    
-    if ( inherits( current_appconfig, "cxapp_config" ) )
-      assign( ".cxapp.wrkcache.config", current_appconfig, envir = .GlobalEnv )
-    
-  }, add = TRUE )
-  
-  
-  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-  
-  if ( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    testthat::fail( "Could not stash current app config" )
-  
-  
-  
-  
-  # - stash current APP_HOME
-  
-  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-apphome-directory-", tmpdir = test_root, fileext = "") )
-  
-  if ( dir.exists( test_apphome ) || ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage test app home directory" )
-  
-  
-  test_apphome_name <- "APP_HOME"
-  
-  # case insensitive matching
-  env_names <- names(Sys.getenv())
-  
-  if ( test_apphome_name %in% base::toupper(env_names) )
-    test_apphome_name <- utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ]  , n = 1)
-  
-  current_apphome <- Sys.getenv( test_apphome_name, unset = NA )
-  
-  resetfor_apphome <- list( current_apphome )
-  names(resetfor_apphome) <- test_apphome_name
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
   
   on.exit({
     
-    if ( ! is.na(current_apphome) )
-      do.call( Sys.setenv, resetfor_apphome )
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
     
   }, add = TRUE )
   
-  names(test_apphome) <- test_apphome_name
   
-  do.call( Sys.setenv, as.list(test_apphome) )
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
   
   
   
-  # - test reference value
+  # - current working directory
   
-  test_reference_name <- paste( sample( c( base::LETTERS, base::letters, as.character(0:9)) , 10), collapse = "")
-
-  test_reference_value <- paste( sample( c( base::LETTERS, base::letters, as.character(0:9)) , 30), collapse = "")
-  names(test_reference_value) <- test_reference_name
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 1:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( c( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 1:5, 1), replace = TRUE ), 
+                                                         base::sample( c( base::LETTERS, base::letters, as.character(0:9), "." ), base::sample( 5:40, 1), replace = TRUE ), 
+                                                         base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 1:5, 1), replace = TRUE )
+                                               ), collapse = ""),
+                                               simplify = TRUE )
+  
+  
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  
+  # - stage property files
+  
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
+  
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
     
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
   
   
-  # - inject configuration
-  
-  test_configfile <- file.path( test_apphome, "app.properties", fsep = "/" )
-  
-  base::writeLines( c( "# Test property file", 
-                       paste( test_reference_name, "=", test_reference_value ) ), 
-                    con = test_configfile )
-  
-  if ( ! file.exists( test_configfile ) )
-    testthat::fail( "Could not stage app properties" )
-  
-  
-  
-  # - test configuration
-  
-  test_cfg <- cxapp::.cxappconfig()
-  
-  
-  
-  # - overwrite configuration
-  
-  test_orig_config_sha1 <- digest::digest( test_configfile, algo = "sha1", file = TRUE )
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
 
-  base::writeLines( c( "# Test property file", 
-                       paste( test_reference_name, "=", paste( sample( c( base::LETTERS, base::letters, as.character(0:9)) , 30), collapse = "") ) ), 
-                    con = test_configfile )
-  
-  if ( ! file.exists( test_configfile ) ||
-       ( digest::digest( test_configfile, algo = "sha1", file = TRUE ) == test_orig_config_sha1 ) )
-    testthat::fail( "Could not update staged app properties" )
-  
-  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    testthat::fail( "Unable clear existing config cache .cxapp.wrkcache.config" )
 
+
+  
+    
+  # - test configuration object
+  #   note: expect to initiate work cache
+  test_configobj <- cxapp::cxapp_config()
+
+  #   assert work cache was initiated with first call to cxapp::cxapp_config()
+  testthat::expect_true( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+  
+  
+  # - update test property value
+
+  test_propupdate <- test_properties
+
+  #   note: randomly select one property
+  #   note: length of value is not same as first set of property values ... makes sure random chance does not create the same value
+  test_propupdate[ sample(base::names(test_propupdate), 1) ] <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( c( 1:19, 70:90), 1), replace = TRUE ), collapse = "")
+
+  #   note: verifies that it is the same properties being defined
+  testthat::expect_equal( base::sort(base::names(test_properties)), base::sort(base::names(test_propupdate)) )
+  
+  
+  # - update test property value
+  test_proplineupdates <- base::unlist(lapply( base::names(test_propupdate), function(x) {
+    paste( x, test_propupdate[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplineupdates, con = test_propfiles )
+  
+  
+  
+  # - test object
+  test_obj <- cxapp::cxapp_config()
+  
   
   # -- test
+  result <- sapply( base::names(test_properties),
+                    function(x) { test_obj$option( x, unset = NA ) },
+                    USE.NAMES = FALSE )
   
-  result <- cxapp::.cxappconfig()
   
-
+  # -- expected
   
-  # -- expectations
+  # - search tree
+  expected_searchtree <- test_srchtree
   
-  expected_propname <- paste0( "app/", test_reference_name )
-  expected_propvalue <- unname(test_reference_value)
   
-
+  # - property files
+  
+  expected_propfiles <- lapply( test_propfiles, function(x) {
+    list( "path" = x,
+          "sha" = digest::digest( x, algo = "sha1", file = TRUE ) )
+  })
+  
+  
+  # - properties
+  expected_props <- test_properties
+  base::names(expected_props) <- base::tolower(base::names(expected_props))
+  
+  
   # -- assertions
-
-  # - global object  
-  testthat::expect_true( inherits( result, "cxapp_config" ) )
-  testthat::expect_true( base::exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
   
+  # - properties
+  #   standardize comparison on lower case names ... ignores case
   
-  # - property value
-  #   note: verify global value is read and not the updated config file
-  testthat::expect_equal( result$option( expected_propname, unset = NA ), expected_propvalue )
+  base::names(result) <- base::tolower(base::names(result))
+  testthat::expect_equal( result[ base::sort(base::names(result)) ], expected_props[ base::sort(base::names(expected_props)) ] )
   
 })
 
 
 
-
+testthat::test_that( "config.cacheDisabled", {
+  
+  #' @cx.tests Disabled configuration work cache forces imports of properties from property files
+  
+  
+  # -- stage 
+  
+  test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-root-", tmpdir = base::tempdir(), fileext = "") )
+  
+  on.exit({
+    base::unlink( test_root, recursive = TRUE, force = TRUE )
+  }, add = TRUE )
+  
+  if ( ! dir.exists( test_root ) && ! dir.create( test_root, recursive = TRUE ) )
+    testthat::fail("Could not create test area")
+  
+  
+  # - APP_HOME
+  
+  #   note: case insensitive matching of APP_HOME
+  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
+                              unset = NA,
+                              names = TRUE )
+  
+  on.exit({
+    
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
+    
+  }, add = TRUE )
+  
+  
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
+  
+  
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
+  
+  
+  # - stage cxapp in .libPaths()
+  
+  prev_libpath <- .libPaths()
+  
+  on.exit({
+    .libPaths( prev_libpath )
+  }, add = TRUE )
+  
+  
+  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage cxapp libpath directory" )
+  
+  
+  .libPaths( append( test_libpath, .libPaths() ) )
+  
+  
+  
+  # - current working directory
+  
+  prev_wd <- base::getwd()
+  
+  on.exit({
+    base::setwd( prev_wd )
+  }, add = TRUE)
+  
+  
+  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
+    testthat::fail( "Could not stage working directory" )
+  
+  base::setwd( test_wd )
+  
+  
+  # -- test properties
+  
+  test_properties <- replicate( base::sample( 1:20, 1), 
+                                paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 20:60, 1), replace = TRUE ), collapse = ""),
+                                simplify = TRUE )
+  
+  base::names( test_properties ) <- replicate( length(test_properties), 
+                                               paste( c( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 1:5, 1), replace = TRUE ), 
+                                                         base::sample( c( base::LETTERS, base::letters, as.character(0:9), "." ), base::sample( 5:40, 1), replace = TRUE ), 
+                                                         base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( 1:5, 1), replace = TRUE )
+                                               ), collapse = ""),
+                                               simplify = TRUE )
+  
+  
+  # - search tree
+  
+  test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
+                       test_apphome, 
+                       file.path( test_libpath, "cxapp", fsep = "/"),
+                       test_wd )
+  
+  
+  # - stage property files
+  
+  test_propfiles <- file.path( utils::head( test_srchtree, n = 1 ), "app.properties", fsep = "/" )
+  
+  test_proplines <- base::unlist(lapply( base::names(test_properties), function(x) {
+    paste( x, test_properties[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplines, con = test_propfiles )
+  
+  
+  
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
+  }, add = TRUE )
+  
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    testthat::fail( "Unable clear existing config cache .cxapp.wrkcache.config" )
+  
+  
+  
+  
+  # - test configuration object
+  #   note: expect to initiate work cache
+  test_configobj <- cxapp::cxapp_config()
+  
+  #   assert work cache was initiated with first call to cxapp::cxapp_config()
+  testthat::expect_true( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+  
+  
+  # - update test property value
+  
+  test_propupdate <- test_properties
+  
+  #   note: randomly select one property
+  #   note: length of value is not same as first set of property values ... makes sure random chance does not create the same value
+  test_propupdate[ sample(base::names(test_propupdate), 1) ] <- paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9) ), base::sample( c( 1:19, 70:90), 1), replace = TRUE ), collapse = "")
+  
+  #   note: verifies that it is the same properties being defined
+  testthat::expect_equal( base::sort(base::names(test_properties)), base::sort(base::names(test_propupdate)) )
+  
+  
+  # - update test property value
+  test_proplineupdates <- base::unlist(lapply( base::names(test_propupdate), function(x) {
+    paste( x, test_propupdate[x], sep = " = ") 
+  }))
+  
+  base::writeLines( test_proplineupdates, con = test_propfiles )
+  
+  
+  
+  # - test object
+  test_obj <- cxapp::cxapp_config( cached = FALSE )
+  
+  
+  # -- test
+  result <- sapply( base::names(test_properties),
+                    function(x) { test_obj$option( x, unset = NA ) },
+                    USE.NAMES = FALSE )
+  
+  
+  # -- expected
+  
+  # - search tree
+  expected_searchtree <- test_srchtree
+  
+  
+  # - property files
+  
+  expected_propfiles <- lapply( test_propfiles, function(x) {
+    list( "path" = x,
+          "sha" = digest::digest( x, algo = "sha1", file = TRUE ) )
+  })
+  
+  
+  # - properties
+  #   note: expecting updated properties ... not the cached ones
+  expected_props <- test_propupdate
+  base::names(expected_props) <- base::tolower(base::names(expected_props))
+  
+  
+  # -- assertions
+  
+  # - properties
+  #   standardize comparison on lower case names ... ignores case
+  
+  base::names(result) <- base::tolower(base::names(result))
+  testthat::expect_equal( result[ base::sort(base::names(result)) ], expected_props[ base::sort(base::names(expected_props)) ] )
+  
+})

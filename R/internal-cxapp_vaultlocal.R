@@ -44,7 +44,7 @@
   
   
   # -- configuration
-  cfg <- cxapp::.cxappconfig()
+  cfg <- cxapp::cxapp_config()
   
   if ( base::toupper( cfg$option( "vault", unset = "unknown" ) != "LOCAL" ) )
     stop( "Vault configuration is not local" )

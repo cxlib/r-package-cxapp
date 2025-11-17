@@ -62,7 +62,7 @@ cxapp_applicationcache$methods( "initialize" = function() {
   
   # -- cache directory
   
-  cache_root <- cxapp::cxapp_standardpath( cxapp::.cxappconfig()$option( "app/appcache.path", unset = NA) )
+  cache_root <- cxapp::cxapp_standardpath( cxapp::cxapp_config()$option( "appcache.path", unset = NA, use.names = FALSE) )
   
   if ( is.na( cache_root) ) {
 
@@ -138,7 +138,7 @@ cxapp_applicationcache$methods( "add" = function( x ) {
 
   # -- derive TTL/expire
   
-  expire_minutes <- try( as.integer(.cxappconfig()$option( "app/appcache.expire", unset = 1440 )), silent = TRUE )
+  expire_minutes <- try( as.integer(cxapp::cxapp_config()$option( "appcache.expire", unset = 1440 )), silent = TRUE )
   
   if ( inherits( expire_minutes, "try-error" ) )
     stop( "Configuration error in that APPCACHE.EXPIRE is not an integer" )
@@ -385,7 +385,7 @@ cxapp_applicationcache$methods( "touch" = function(x) {
   
   
   # -- derive TTL/expire
-  expire_minutes <- try( as.integer(.cxappconfig()$option( "app/appcache.expire", unset = 1440 )), silent = TRUE )
+  expire_minutes <- try( as.integer(cxapp::cxapp_config()$option( "appcache.expire", unset = 1440 )), silent = TRUE )
   
   if ( inherits( expire_minutes, "try-error" ) )
     stop( "Configuration error in that APPCACHE.EXPIRE is not an integer" )
@@ -434,7 +434,7 @@ cxapp_applicationcache$methods( "show" = function() {
   
 
   # -- add expire duration setting
-  info <- append( info, paste( "Object time to expire (minutes)    ", .cxappconfig()$option( "app/appcache.expire", unset = 1440 ) ),)
+  info <- append( info, paste( "Object time to expire (minutes)    ", cxapp::cxapp_config()$option( "appcache.expire", unset = 1440 ) ),)
   
   
   # -- add number of objects

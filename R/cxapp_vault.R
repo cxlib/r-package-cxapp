@@ -24,7 +24,7 @@ cxapp_vault <- function() {
   
   # -- configuration
   #    note: uses standard configuration
-  cfg <- cxapp::.cxappconfig()
+  cfg <- cxapp::cxapp_config()
   
   
   # -- identify vault

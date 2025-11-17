@@ -10,43 +10,72 @@
 #' A utility class to represent app configurations defined in property files and
 #' environmental variables.
 #' 
-#' Property files are named `<context>.properties` where the configuration option
-#' is referred to by `<context>/<property>`. 
+#' One or more properties are defined in property files. A property file name
+#' contains the characters a-z and digits 0-9 and the file extension 
+#' `properties`. 
 #' 
-#' Property file syntax and conventions are specified in the help reference for 
-#' function \link[cxapp]{cxapp_propertiesread}.
-#' 
-#' The class initialization first searches for the file `app.properties` in the 
-#' following sequence of directories.
+#' Property files are searched in the following sequence of directories (search
+#' tree).
 #' 
 #' \itemize{
-#'   \item Current working directory (\link[base]{getwd})
 #'   \item Directory `$APP_HOME/config`, if the `APP_HOME` environmental variable
 #'         is defined
 #'   \item Directory `$APP_HOME`, if the `APP_HOME` environmental variable is
 #'         defined
 #'   \item The cxapp package install directory in the library tree 
 #'         (\link[base]{.libPaths})
+#'   \item Current working directory (\link[base]{getwd})
 #' }
 #' 
-#' Class initialization also takes an optional vector of paths as an argument. 
-#' If the path specified ends in `.properties`, it is assumed a properties file. 
-#' Otherwise, the entry is assumed a directory containing one or more property 
-#' files. The vector `x` is processed in specified order and files within a
-#' directory in natural sort order. 
+#' If `APP_HOME` environmental variable is a list of paths, each path is added 
+#' to search tree in the sequence specified.
 #' 
-#' A property file name contains the characters a-z and digits 0-9 and the file 
-#' extension `properties`. The property file name excluding the file extension 
-#' is used as the context to look up a named property value.
+#' The class initialization first searches for and imports properties from the
+#' file `app.properties` in the search tree and then process each additional 
+#' property file in natural sort order. If a property file exists in multiple
+#' search locations and `recursive = FALSE`, the first occurrence is used and
+#' the remaining property file locations are ignored.
 #' 
-#' The `option()` method returns the value of an option if it exists or the value
-#' of `unset` if the option does not exist. An option is referred to by the string
-#' `<context>/<property>`. If the context is not specified, the context is assumed
-#' to be `app`.
+#' Property file syntax and conventions, including property naming conventions, 
+#' are specified in the help reference for function
+#' \link[cxapp]{cxapp_propertiesread}.
 #' 
-#' If the option is not defined as part of a property file, the `option()` method
-#' searches for an environment variable `<context>_<property>`. Any periods in
-#' property name part is converted to underscores.  
+#' Configuration property is referred to by the `<property>` name, case
+#' insensitive. If `<property>` is defined in more than one property file, the 
+#' `<property>` the value will refer to the first occurrence of the property 
+#' definition as determined by the property file search sequence. 
+#' 
+#' If class initialization `cached = TRUE` (default), the in-memory cached 
+#' configuration will be used instead of searching for and importing all 
+#' property files. The configuration properties are cached in the R object
+#' `.cxapp.wrkcache.config` in the R session global environment 
+#' \link[base]{.GlobalEnv}.
+#' 
+#' Note that `cached = FALSE` will update the existing cache after the property 
+#' files are imported following the convention that static configuration 
+#' (property files) takes precedence over dynamic configuration.
+#' 
+#' All cached configuration properties are reset (not amended) every time 
+#' property files are imported regardless of the value of `cached`.
+#' 
+#' The `option()` method returns the value of property `x`, if it exists. If `x`
+#' is a character vector of property names, the value of the first existing 
+#' property option from the specified sequence of names is returned. 
+#' 
+#' The property value returned is a named entry with the matching property name
+#' in lower case when `use.names = TRUE` (default). 
+#' 
+#' If none of the specified properties exist as a configuration property and 
+#' `search.envars = TRUE` (default), the `option()` method searches for an
+#' environment variable for each entry of `x`, first in lower case followed by
+#' upper case, and returns first occurrence. The character period `.` in a 
+#' property name is replaced with a single underscore `_` in the environment 
+#' variable name. If the environmental variable names do not correspond to a 
+#' property name, append the environmental variable names to the end of `x`
+#' (note translation of special characters and case matching).
+#' 
+#' If the property is not defined or do not resolve to an environmental variable, 
+#' the value of `unset` is returned.
 #' 
 #' An option value that contains the prefix `[env] <name>` or starts with the 
 #' character `$`, as in `$<name>`, is interpreted as a reference to an environmental 
@@ -55,23 +84,10 @@
 #' case sensitive with leading and trailing spaces removed.
 #' 
 #' An option value that contains the prefix `[vault] <name>` is interpreted as
-#' a reference to a vault secret with specified name. If a vault service is not 
-#' configured or available or the vault hs not defined the specified secret, the
-#' value of `unset` is returned. The secret name is case sensitive with leading
-#' and trailing spaces removed.
-#' 
-#' The `as.type` parameter in the `option()` method affects how a property value
-#' is returned. If `as.type` is equal to `TRUE` (default), then 
-#' \itemize{
-#'   \item a vector of paths is returned if the property name includes the word
-#'         `PATH`, case insensitive
-#'   \item logical value `TRUE` is returned if the property value is equal to 
-#'         `enable`, `enabled`, `grant` or `permit`
-#'   \item logical value `FALSE` is returned if the property value is equal to 
-#'         `disable`, `disabled`, `revoke` or `deny`
-#' }
-#' 
-#' If `as.type` is equal to `FALSE`, the actual property value unaltered is returned.
+#' a reference to a vault secret with specified name. The value of `unset` is 
+#' returned if a vault service is not configured, the vault service is not 
+#' available or the vault returns \emph{not found} for the specified secret. 
+#' The secret name is case sensitive with leading and trailing spaces removed.
 #' 
 #' 
 #' @exportClass cxapp_config
@@ -82,262 +98,247 @@ cxapp_config <- methods::setRefClass( "cxapp_config",
                                       fields = list( ".attr" = "list" ) )
 
 
-cxapp_config$methods( "initialize" = function( x ) {
+cxapp_config$methods( "initialize" = function( cached = TRUE, recursive = TRUE ) {
   "Initialize"
-  
+
   
   # -- init .attr
-  .self$.attr <- list( ".internal" = list( "property.files" = character(0) ) 
-                    )
+  .self$.attr <- list( "search.tree" = character(0),
+                       "property.files" = list(),
+                       "properties" = list() ) 
+  
+
+  # -- some sense checks    
+
+  if ( ! inherits( cached, "logical" ) )
+    stop( "The cached switch is invalid" )
+
+
+                    
+  # -- cached
+  if ( cached && base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )) {
+
+    # - simple integrity checks    
+    if ( ! inherits( base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ), "list" ) ||
+         ! all( base::names(.self$.attr) %in% base::names(base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )) ) )
+      stop( "Cached configuration invalid or corrupted" )
+
+    # - restore configuration from cached copy
+    .self$.attr <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+    
+    return()
+  }
+
+    
+  
   
   
   # -- property files to load
-  prop_files <- character(0)
-  
 
-  # - search tree for app.properties
-  srch_tree <- character(0)
+  #   directory search tree for *.properties
+  srch_lst <- character(0)
 
-  
-  # - current working directory
-  srch_tree <- append( srch_tree, cxapp::cxapp_standardpath( base::getwd() ) )
-  
   
   # - APP_HOME environment
-  
-  app_home_config_propfiles <- character(0)
   
   if ( "APP_HOME" %in% base::toupper(names(Sys.getenv())) ) {
 
     # case insensitive matching     
-    env_names <- names(Sys.getenv())
-    app_home <- cxapp::cxapp_standardpath( Sys.getenv( utils::head( env_names[ base::toupper(env_names) == "APP_HOME" ] , n = 1 ) ) )
+    env_names <- base::names(Sys.getenv())
+
+    if ( length(env_names[ base::toupper(env_names) %in% "APP_HOME" ]) != 1 )
+      stop( "Multiple instances of APP_HOME environmental variable identified when case ignored" )
     
-    srch_tree <- append( srch_tree, c( file.path( app_home, "config", fsep = "/" ), 
-                                       app_home ) )
+    app_home_env <- Sys.getenv( env_names[ match( "APP_HOME", base::toupper(env_names) ) ] )
     
-    
-    app_home_config_propfiles <- list.files( file.path( app_home, "config", fsep = "/" ),
-                                             pattern = ".properties$", 
-                                             full.names = TRUE, 
-                                             recursive = FALSE, 
-                                             include.dirs = FALSE )
-      
-  }
+    srch_lst <- append( srch_lst, 
+                         sapply( base::unlist( base::strsplit( app_home_env, .Platform$path.sep, fixed = TRUE), use.names = FALSE ), 
+                                 function(x) {
+                                   cxapp::cxapp_standardpath( c( file.path( x, "config", fsep = "/"), x ) ) 
+                                 } ) )
+
+  }  # end of if-statement for APP_HOME
   
   
   # - cxapp install directory in library tree
-  srch_tree <- append( srch_tree, file.path( cxapp::cxapp_standardpath(.libPaths()), "cxapp", fsep = "/" ) )
   
+  if ( "cxapp" %in% list.dirs( .libPaths(), recursive = FALSE, full.names = FALSE ) ) {
 
-  # - add first occurrence to property files
-  
-  app_property_files <- file.path( srch_tree, "app.properties", fsep = "/" ) 
-  
-  if ( any(file.exists( app_property_files )) )
-    prop_files <- utils::head( app_property_files[ file.exists(app_property_files) ], n = 1 )
-    
-  
-
-  # 
-  # # -- add first occurrence of cxapp.properties found in .libPaths()
-  # srch_paths <- base::file.path( cxapp:::.cxapp_standardpath(.libPaths()), 
-  #                                "cxapp",
-  #                                "cxapp.properties", 
-  #                                fsep = "/" )
-  # 
-  # if ( any(file.exists( srch_paths )) )
-  #   prop_files[ "cxapp.properties" ] <- utils::head( srch_paths[ base::file.exists( srch_paths) ], n = 1 ) 
-  
-  
-  if ( ! missing(x) && ! is.null(x) )
-    for ( xitem in x[ ! is.na(x) ] ) {
-
-      # note: first occurrence of a file is retain ... all others ignored
-      
-      # specified as a file 
-      if ( base::grepl( ".properties$", xitem, perl = TRUE, ignore.case = TRUE ) &&
-           file.exists( xitem ) ) {
-        
-        if ( ! base::basename(xitem) %in% names(prop_files) )
-          prop_files[ base::basename(xitem) ] <- xitem
-        
-        next()
-      }
-
-      # xitem is not a directory
-      if ( ! dir.exists( xitem ) )
-        next()
-      
-
-      # treat xitem as a directory
-      for ( xfile in list.files( xitem, pattern = ".properties$", recursive = FALSE, include.dirs = FALSE, full.names = TRUE ) )
-        if ( ! base::basename(xfile) %in% names(prop_files) )
-          prop_files[ base::basename(xfile) ] <- xfile
-
-    }
-  
-  
-  
-  # - add app home config property files
-  #   note: this is a hack ... to back load app home config files that are not explicitly loaded
-  prop_files <- append( prop_files, app_home_config_propfiles )
-
-      
-  # -- process property files
-  
-  read_propfiles <- character(0)
-  
-  for ( xpath in prop_files ) {
-
-    props <- cxapp::cxapp_propertiesread( xpath )
-    names(props) <- base::tolower(names(props))
-
-    xcontext <- base::basename( tools::file_path_sans_ext( xpath ) )
-    
-    if ( ! grepl( "^[a-z0-9]+$", xcontext, perl = TRUE, ignore.case = TRUE ) )
-      stop( "Invalid property file name" )
-    
-    
-    if ( xcontext %in% names(.self$.attr) )
-      next()
+    # note: list.dirs( .libPaths(), ... ) does not preserve the order of .libPaths()
+    lb_paths <- base::unlist( lapply( .libPaths(), function(x) {
+      cxapp::cxapp_standardpath( list.dirs( x, recursive = FALSE, full.names = TRUE ) )
+    }), use.names = FALSE )
     
 
-    .self$.attr[[ xcontext ]] <-  props
+    srch_lst <- append( srch_lst, 
+                        utils::head( lb_paths[ base::basename(lb_paths) == "cxapp" ], n = 1 ) )
     
-    read_propfiles <- append( read_propfiles, xpath )
-    
-    base::rm( props )
   }
+  
 
-
-  # <- register discovered property files 
-  .self$.attr[[".internal"]][["property.files"]] <- read_propfiles
+  # - current working directory
+  srch_lst <- append( srch_lst, cxapp::cxapp_standardpath( base::getwd() ) )
   
   
+  # - add search tree to internal references
+  .self$.attr[["search.tree"]] <- srch_lst[ dir.exists(srch_lst) ]
+  
+
+  
+  # - identify property files to load
+  
+  prop_files <- character(0)
+
+  
+  for ( xpath in .self$.attr[["search.tree"]] ) {
+
+    xpath_propfiles <- base::sort(list.files( xpath, pattern = "\\.properties$", recursive = FALSE, full.names = TRUE ))
+
+    
+    # deal with app.properties precedence
+    # using unique() later to clean out duplicate paths
+    if ( "app.properties" %in% base::basename(base::tolower(xpath_propfiles)) &&
+         ( recursive || ( length(app_propfiles) == 0 ) ) )
+      prop_files <- append( prop_files, file.path( xpath, "app.properties", fsep = "/" ) )
+
+    
+    for ( xfile in xpath_propfiles ) 
+      if ( recursive || ! base::basename(xfile) %in% base::basename(prop_files) )
+        prop_files <- append( prop_files, xfile ) 
+
+  }  #  end of for-statement across each directory in search tree  
+    
+  
+  # - remove duplicates
+  #   note: paths are not resolved to real paths in order to permit configuration linking
+  prop_files <- base::unique(prop_files)
+    
+
+
+
+  # -- import properties
+  
+  for ( xfile in prop_files ) {
+    
+    # - import properties from file 
+    props <- cxapp::cxapp_propertiesread( xfile )
+    base::names(props) <- base::tolower(base::trimws(base::names(props)))
+
+    # - append missing properties
+    .self$.attr[["properties"]] <- append( .self$.attr[["properties"]], 
+                                           as.list( props[ ! base::names(props) %in% base::names(.self$.attr[["properties"]]) ] ) )
+   
+    # - add property file to list of imported 
+    .self$.attr[["property.files"]][[ length(.self$.attr[["property.files"]]) + 1 ]]  <- list( "path" = xfile, 
+                                                                                               "sha" = digest::digest( xfile, algo = "sha1", file = TRUE ) )
+    
+  }  #  end of for-statement to import each identified property file
+  
+  
+  
+  # -- update cache
+  #    note: we always do this .. makes cached = TRUE work
+  base::assign( ".cxapp.wrkcache.config", .self$.attr, envir = base::.GlobalEnv )
+
 })
 
 
 
-cxapp_config$methods( "option" = function( x, unset = NA, as.type = TRUE ) {
+cxapp_config$methods( "option" = function( x, unset = NA, search.envars = TRUE, use.names = TRUE ) {
   "Get property value"
   
-  if ( missing(x) || is.null(x) || any(is.na(x)) || ! inherits(x, "character") )
+  if ( missing(x) || ! inherits( x, c( "character", "numeric" ) ) )
     stop( "The specified option is missing" )
 
-  if ( length(x) > 1 )
-    stop( "More than one option specified. Expecting one.")
-
-  if ( ! base::grepl( "^([a-z0-9\\._\\-]+/)?[a-z0-9\\._]+$", x, ignore.case = TRUE, perl = TRUE ) )
-    stop( "Option reference is invalid" )
+  if ( any( ! grepl( "^[a-z0-9][a-z0-9_\\.]{0,98}[a-z0-9]$", as.character(x), ignore.case = TRUE, perl = TRUE )) )
+    stop( "One or more option references are invalid" )
   
+  
+  if ( ! inherits( search.envars, "logical" ) )
+    stop( "Option to search environmental variables is an invalid value" )
+
   
   # -- generate a standard set of references
-  #    note: if context not specified, assume cxapp
+  opt_refs <- lapply( base::tolower(base::trimws(as.character(x))), function(x) {
+    c( "property" = x, 
+       "env" = base::gsub( "\\.", "_", x ) )
+  })
   
-  opt_std <- base::tolower( ifelse( grepl( "/", x), x, paste("app", x, sep = "/") ) )
   
-  opt_ref <- c( "property" = base::gsub( "/", ".", opt_std ),
-                "env" = base::gsub( "[\\-\\./]", "_", opt_std ) )
-
  
-  # -- initialize value
+  # -- initialize option standardized name and value 
+  opt_std <- NA
   xvalue <- NA
   
   
-  # -- search properties
-  xopts <- base::unlist( .self$.attr[ names(.self$.attr) != ".internal" ] )
+  # -- search defined properties
   
-  if ( base::tolower(opt_ref["property"]) %in% base::tolower(names(xopts)) )
-    xvalue <- base::trimws( unname(xopts[ opt_ref["property"] ]) )
-  
-
-  # -- search environmental variables  
-  #    note: search is case in-sensitive
-  if ( is.na( xvalue ) ) {
-    
-    opt_env_names <- names(Sys.getenv())
-
-    if ( base::tolower(opt_ref["env"]) %in% base::tolower(opt_env_names) ) 
-      xvalue <- base::trimws( Sys.getenv( utils::head( opt_env_names[ base::tolower(opt_env_names) %in% base::tolower(opt_ref["env"]) ], n = 1 ), unset = NA ) )
-    
-  }
+  for ( xopt in opt_refs ) 
+    if ( xopt["property"] %in% base::names(.self$.attr[["properties"]]) ) {
+      opt_std <- xopt["property"]
+      xvalue <- .self$.attr[["properties"]][[ xopt["property"] ]]
+      break()
+    }
 
   
+  # -- search environmental variables
+  if ( is.na(xvalue) && search.envars )
+    for ( xopt in opt_refs ) 
+      if ( xopt["env"] %in% base::tolower(base::names(Sys.getenv())) ) {
+        opt_std <- xopt["property"]
+        xvalue <- Sys.getenv( xopt["env"], unset = Sys.getenv( base::toupper(xopt["env"]), unset = NA ) )
+        break()
+      }
+  
+
+
+  # -- return for property not found
   if ( is.na(xvalue) )
     return(unset)
 
 
   # -- env variable re-directs
+  #    note: variable name is identified by value prefix [ENV] or $
+  #    note; ignore case
   
-  #    note: the value has the prefix "[env]"
-  if ( base::startsWith( base::trimws(base::toupper(xvalue)), "[ENV]" ) ) {
-    
-    # note: start position 6 is length of [env] + 1
-    xref_name <- base::trimws( base::substring( base::trimws(xvalue), 6 ) )
-    
-    xvalue <- base::Sys.getenv( xref_name, unset = unset )
-  }
-  
-  
-  #    note: the value starts with the character "$"
-  if ( base::grepl("^\\$.*", base::trimws(base::toupper(xvalue)), perl = TRUE ) ) {
+  if ( any( base::startsWith( base::trimws(base::toupper(xvalue)), c( "[ENV]", "$" )) ) ) {
 
-    # note: start position 2 is character after $
-    xref_name <- base::trimws( base::substring( base::trimws(xvalue), 2 ) )
+    # - determine environmental variable name 
+    #   note: variable name is string after [env] or $
+    xref_name <- base::trimws(gsub( "^(\\[env\\]|\\$)(.*)$", "\\2",  base::trimws(xvalue), ignore.case = TRUE, perl = TRUE ))    
+
+    # - if named environmental variable does not exist
+    if ( ! xref_name %in% base::names(Sys.getenv()) )
+      return(unset)
     
+    # - resolve value    
     xvalue <- base::Sys.getenv( xref_name, unset = unset )
   }
   
 
-  
   # -- vault secret re-directs
+  #    note: vault secret identified by value prefix [VAULT]
+  #    note; ignore case
   
   if ( base::startsWith( base::trimws(base::toupper(xvalue)), "[VAULT]" ) ) {
 
-    # note: start position 8 is length of [vault] + 1
-    xref_name <- base::trimws( base::substring( base::trimws(xvalue), 8 ) )
-    
-    # connect to a vault    
+    # - determine secret name
+    #   note: +1 to start substring after [vault]
+    xref_name <- base::trimws( base::substring( base::trimws(xvalue), base::nchar( "[VAULT]") + 1 ) ) 
+
+    # connect to a vault
     vaultsvc <- cxapp::cxapp_vault()
-    
+
     xvalue <- vaultsvc$secret( xref_name, unset = unset )
   }
-  
-    
-  
-  if ( ! as.type )
-    return(xvalue)
-      
 
-  # -- paths
-  #    note: if property name includes the term PATH
-  #    note: value is treated as valus of delimited list of paths
-  
-  if ( grepl( "path", gsub( ".*/(.*)", "\\1", opt_std ), ignore.case = TRUE ) )
-    return( base::trimws(base::unlist(base::strsplit( xvalue, .Platform$path.sep, fixed = TRUE))) )
-  
-  
-  # -- enabled switch
-  #    note: value is a single word
-  #    note: if the value is equal to enable, enabled, grant or permit
-  #    note: enabled switch is TRUE
-  
-  if ( grepl( "^(enable|enabled|grant|permit)$", xvalue, ignore.case = TRUE, perl = TRUE ) )
-    return( TRUE )
 
-    
-  # -- disabled switch
-  #    note: value is a single word
-  #    note: if the value is equal to disable, disabled, revoke or deny
-  #    note: disabled switch is TRUE
+  # -- name return value
+  if ( use.names )
+    base::names(xvalue) <- opt_std
   
-  if ( grepl( "^(disable|disabled|revoke|deny)$", xvalue, ignore.case = TRUE, perl = TRUE ) )
-    return( FALSE )
-  
-  
-  # -- or it is simply a value
-  
+
+  # -- return value
   return(base::trimws(xvalue))
 
 })
@@ -348,29 +349,61 @@ cxapp_config$methods( "option" = function( x, unset = NA, as.type = TRUE ) {
 cxapp_config$methods( "show" = function( x ) {
   "Display list of properties"
   
-  xlst <- character(0)
+  lst_info <- character(0)
+
+  
+  # -- add search tree to list
+  lst_info <- append( lst_info, c( "Search tree",
+                                   paste( base::rep_len( "-", 60), collapse = "") ) )
+  
+  if ( ! "search.tree" %in% names(.self$.attr) || 
+       ( length(.self$.attr[["search.tree"]]) == 0 ) )
+    lst_info <- append( lst_info, "(None)" )
+  
+    
+  if ( "search.tree" %in% names(.self$.attr) || 
+       ( length(.self$.attr[["search.tree"]]) > 0 ) )
+    lst_info <- append( lst_info, .self$.attr[["search.tree"]] )
+  
   
   # -- add list of property files to list
   
-  xlst <- append( xlst, c( "Property files",
-                           paste( base::rep_len( "-", 60), collapse = "") ) )
+  lst_info <- append( lst_info, c( base::rep_len(" ", 2), 
+                                   "Property files",
+                                   paste( base::rep_len( "-", 60), collapse = "") ) )
   
-  if ( ! ".internal" %in% names(.self$.attr) || 
-       ! "property.files" %in% names(.self$.attr[[".internal"]]) || 
-       ( length(.self$.attr[[".internal"]][["property.files"]]) == 0 ) )
-    xlst <- append( xlst, "(None)" )
+  if ( ! "property.files" %in% names(.self$.attr) || 
+       ( length(.self$.attr[["property.files"]]) == 0 ) )
+    lst_info <- append( lst_info, "(None)" )
   
   
-  if ( ".internal" %in% names(.self$.attr) && 
-       "property.files" %in% names(.self$.attr[[".internal"]]) &&
-       ( length(.self$.attr[[".internal"]][["property.files"]]) > 0 ) )
-    
-    xlst <- append( xlst, .self$.attr[[".internal"]][["property.files"]] )
+  if ( "property.files" %in% names(.self$.attr) &&
+       ( length(.self$.attr[["property.files"]]) > 0 ) )
+    lst_info <- append( lst_info, 
+                        base::unlist(lapply( .self$.attr[["property.files"]], function(x) { x[["path"]] } ), use.names = FALSE))
+                        
+  
+  # -- add list of properties
+  
+  lst_info <- append( lst_info, c( base::rep_len(" ", 2), 
+                                   "Defined properties",
+                                   paste( base::rep_len( "-", 60), collapse = "") ) )
+  
+  
+  if ( ! "properties" %in% names(.self$.attr) || 
+       ( length(.self$.attr[["properties"]]) == 0 ) )
+    lst_info <- append( lst_info, "(None)" )
+  
+  
+  if ( "properties" %in% names(.self$.attr) &&
+       ( length(.self$.attr[["properties"]]) > 0 ) )
+    lst_info <- append( lst_info, base::sort(base::names(.self$.attr[["properties"]])) )
+  
   
   
   # -- display list
   cat( c( base::rep_len(" ", 2),
-          xlst, 
+          lst_info, 
           base::rep_len(" ", 2) ), 
        sep = "\n" )
   

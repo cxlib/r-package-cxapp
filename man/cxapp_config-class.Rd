@@ -9,43 +9,72 @@
 A utility class to represent app configurations defined in property files and
 environmental variables.
 
-Property files are named \verb{<context>.properties} where the configuration option
-is referred to by \verb{<context>/<property>}.
+One or more properties are defined in property files. A property file name
+contains the characters a-z and digits 0-9 and the file extension
+\code{properties}.
 
-Property file syntax and conventions are specified in the help reference for
-function \link[cxapp]{cxapp_propertiesread}.
-
-The class initialization first searches for the file \code{app.properties} in the
-following sequence of directories.
+Property files are searched in the following sequence of directories (search
+tree).
 
 \itemize{
-\item Current working directory (\link[base]{getwd})
 \item Directory \verb{$APP_HOME/config}, if the \code{APP_HOME} environmental variable
 is defined
 \item Directory \verb{$APP_HOME}, if the \code{APP_HOME} environmental variable is
 defined
 \item The cxapp package install directory in the library tree
 (\link[base]{.libPaths})
+\item Current working directory (\link[base]{getwd})
 }
 
-Class initialization also takes an optional vector of paths as an argument.
-If the path specified ends in \code{.properties}, it is assumed a properties file.
-Otherwise, the entry is assumed a directory containing one or more property
-files. The vector \code{x} is processed in specified order and files within a
-directory in natural sort order.
+If \code{APP_HOME} environmental variable is a list of paths, each path is added
+to search tree in the sequence specified.
 
-A property file name contains the characters a-z and digits 0-9 and the file
-extension \code{properties}. The property file name excluding the file extension
-is used as the context to look up a named property value.
+The class initialization first searches for and imports properties from the
+file \code{app.properties} in the search tree and then process each additional
+property file in natural sort order. If a property file exists in multiple
+search locations and \code{recursive = FALSE}, the first occurrence is used and
+the remaining property file locations are ignored.
 
-The \code{option()} method returns the value of an option if it exists or the value
-of \code{unset} if the option does not exist. An option is referred to by the string
-\verb{<context>/<property>}. If the context is not specified, the context is assumed
-to be \code{app}.
+Property file syntax and conventions, including property naming conventions,
+are specified in the help reference for function
+\link[cxapp]{cxapp_propertiesread}.
 
-If the option is not defined as part of a property file, the \code{option()} method
-searches for an environment variable \verb{<context>_<property>}. Any periods in
-property name part is converted to underscores.
+Configuration property is referred to by the \verb{<property>} name, case
+insensitive. If \verb{<property>} is defined in more than one property file, the
+\verb{<property>} the value will refer to the first occurrence of the property
+definition as determined by the property file search sequence.
+
+If class initialization \code{cached = TRUE} (default), the in-memory cached
+configuration will be used instead of searching for and importing all
+property files. The configuration properties are cached in the R object
+\code{.cxapp.wrkcache.config} in the R session global environment
+\link[base]{.GlobalEnv}.
+
+Note that \code{cached = FALSE} will update the existing cache after the property
+files are imported following the convention that static configuration
+(property files) takes precedence over dynamic configuration.
+
+All cached configuration properties are reset (not amended) every time
+property files are imported regardless of the value of \code{cached}.
+
+The \code{option()} method returns the value of property \code{x}, if it exists. If \code{x}
+is a character vector of property names, the value of the first existing
+property option from the specified sequence of names is returned.
+
+The property value returned is a named entry with the matching property name
+in lower case when \code{use.names = TRUE} (default).
+
+If none of the specified properties exist as a configuration property and
+\code{search.envars = TRUE} (default), the \code{option()} method searches for an
+environment variable for each entry of \code{x}, first in lower case followed by
+upper case, and returns first occurrence. The character period \code{.} in a
+property name is replaced with a single underscore \verb{_} in the environment
+variable name. If the environmental variable names do not correspond to a
+property name, append the environmental variable names to the end of \code{x}
+(note translation of special characters and case matching).
+
+If the property is not defined or do not resolve to an environmental variable,
+the value of \code{unset} is returned.
 
 An option value that contains the prefix \verb{[env] <name>} or starts with the
 character \code{$}, as in \verb{$<name>}, is interpreted as a reference to an environmental
@@ -54,23 +83,10 @@ defined, the value of \code{unset} is returned. The environmental variable name 
 case sensitive with leading and trailing spaces removed.
 
 An option value that contains the prefix \verb{[vault] <name>} is interpreted as
-a reference to a vault secret with specified name. If a vault service is not
-configured or available or the vault hs not defined the specified secret, the
-value of \code{unset} is returned. The secret name is case sensitive with leading
-and trailing spaces removed.
-
-The \code{as.type} parameter in the \code{option()} method affects how a property value
-is returned. If \code{as.type} is equal to \code{TRUE} (default), then
-\itemize{
-\item a vector of paths is returned if the property name includes the word
-\code{PATH}, case insensitive
-\item logical value \code{TRUE} is returned if the property value is equal to
-\code{enable}, \code{enabled}, \code{grant} or \code{permit}
-\item logical value \code{FALSE} is returned if the property value is equal to
-\code{disable}, \code{disabled}, \code{revoke} or \code{deny}
-}
-
-If \code{as.type} is equal to \code{FALSE}, the actual property value unaltered is returned.
+a reference to a vault secret with specified name. The value of \code{unset} is
+returned if a vault service is not configured, the vault service is not
+available or the vault returns \emph{not found} for the specified secret.
+The secret name is case sensitive with leading and trailing spaces removed.
 }
 \section{Fields}{
 
@@ -81,8 +97,8 @@ If \code{as.type} is equal to \code{FALSE}, the actual property value unaltered 
 \section{Methods}{
 
 \describe{
-\item{\code{initialize(x)}}{Initialize}
+\item{\code{initialize(cached = TRUE, recursive = TRUE)}}{Initialize}
 
-\item{\code{option(x, unset = NA, as.type = TRUE)}}{Get property value}
+\item{\code{option(x, unset = NA, search.envars = TRUE, use.names = TRUE)}}{Get property value}
 }}
 
