@@ -268,7 +268,7 @@ testthat::test_that( "appcache.configAppCache", {
   # -- test
 
   result <- cxapp::cxapp_applicationcache()
-
+print(result$.attr)
 
   # -- expected
 
