@@ -89,7 +89,7 @@ cxapp_logerr <- function( x, echo = base::interactive() ) {
   
   
   # -- get configuration
-  cfg <- cxapp::.cxappconfig()
+  cfg <- cxapp::cxapp_config()
   
   
   # -- echo mode ... send to console  
@@ -105,25 +105,25 @@ cxapp_logerr <- function( x, echo = base::interactive() ) {
   
   # -- log file
   
-  log_dir <- cxapp::cxapp_standardpath( cfg$option( "LOG.PATH", as.type = FALSE ) )
+  log_dir <- cxapp::cxapp_standardpath( cfg$option( "LOG.PATH" ) )
   
   if ( ! dir.exists( log_dir ) )
     stop( "Log directory ", log_dir, " does not exist" )
   
   
-  log_file_name <- cfg$option( "LOG.NAME", unset = "app", as.type = FALSE )
+  log_file_name <- cfg$option( "LOG.NAME", unset = "app")
   
   #    note: known log rotations
   log_rotations <- c( "year" = "%Y", "month" = "%Y%m", "day" = "%Y%m%d" )
   
   
-  if ( ! is.na( cfg$option( "LOG.ROTATION", unset = NA, as.type = FALSE ) ) ) {
+  if ( ! is.na( cfg$option( "LOG.ROTATION", unset = NA ) ) ) {
     
-    if ( ! base::tolower(cfg$option( "LOG.ROTATION", as.type = FALSE )) %in% names(log_rotations) )
-      stop( "Log rotation ", cfg$option( "LOG.ROTATION", as.type = FALSE ), " not known")
+    if ( ! base::tolower(cfg$option( "LOG.ROTATION" )) %in% names(log_rotations) )
+      stop( "Log rotation ", cfg$option( "LOG.ROTATION" ), " not known")
     
     log_file_name <- append( log_file_name, 
-                             base::format( base::as.POSIXlt(base::Sys.time(), tz = "UTC"), format = log_rotations[ base::tolower(cfg$option( "LOG.ROTATION", as.type = FALSE )) ] ) )
+                             base::format( base::as.POSIXlt(base::Sys.time(), tz = "UTC"), format = log_rotations[ base::tolower(cfg$option( "LOG.ROTATION" )) ] ) )
   }                             
   
   log_file_path <- file.path( log_dir, paste0( paste( log_file_name, collapse = "-"), ".err" ), fsep = "/" )
