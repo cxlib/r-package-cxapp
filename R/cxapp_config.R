@@ -63,7 +63,7 @@
 #' property option from the specified sequence of names is returned. 
 #' 
 #' The property value returned is a named entry with the matching property name
-#' in lower case.
+#' in lower case when `use.names = TRUE` (default). 
 #' 
 #' If none of the specified properties exist as a configuration property and 
 #' `search.envars = TRUE` (default), the `option()` method searches for an
@@ -244,7 +244,7 @@ cxapp_config$methods( "initialize" = function( cached = TRUE, recursive = TRUE )
 
 
 
-cxapp_config$methods( "option" = function( x, unset = NA, search.envars = TRUE ) {
+cxapp_config$methods( "option" = function( x, unset = NA, search.envars = TRUE, use.names = TRUE ) {
   "Get property value"
   
   if ( missing(x) || ! inherits( x, c( "character", "numeric" ) ) )
@@ -334,7 +334,8 @@ cxapp_config$methods( "option" = function( x, unset = NA, search.envars = TRUE )
 
 
   # -- name return value
-  base::names(xvalue) <- opt_std
+  if ( use.names )
+    base::names(xvalue) <- opt_std
   
 
   # -- return value
