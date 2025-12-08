@@ -27,11 +27,10 @@ testthat::test_that( "config.envPropFilePrecedenceDefault", {
   
   
   # - APP_HOME
-  
-  #   note: case insensitive matching of APP_HOME
-  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
-                              unset = NA,
-                              names = TRUE )
+
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
   on.exit({
     
@@ -56,41 +55,6 @@ testthat::test_that( "config.envPropFilePrecedenceDefault", {
     testthat::fail( "Could not stage APP_HOME" )
   
   
-  # - stage cxapp in .libPaths()
-  
-  prev_libpath <- .libPaths()
-  
-  on.exit({
-    .libPaths( prev_libpath )
-  }, add = TRUE )
-  
-  
-  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage cxapp libpath directory" )
-  
-  
-  .libPaths( append( test_libpath, .libPaths() ) )
-  
-  
-  
-  # - current working directory
-  
-  prev_wd <- base::getwd()
-  
-  on.exit({
-    base::setwd( prev_wd )
-  }, add = TRUE)
-  
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage working directory" )
-  
-  base::setwd( test_wd )
-  
   
   # -- test properties
   
@@ -106,9 +70,7 @@ testthat::test_that( "config.envPropFilePrecedenceDefault", {
   # - search tree
   
   test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
-                       test_apphome, 
-                       file.path( test_libpath, "cxapp", fsep = "/"),
-                       test_wd )
+                       test_apphome )
   
   
   # - stage property files
@@ -204,10 +166,9 @@ testthat::test_that( "config.envResolvesWithSSearchEnvarEnabled", {
   
   # - APP_HOME
   
-  #   note: case insensitive matching of APP_HOME
-  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
-                              unset = NA,
-                              names = TRUE )
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
   on.exit({
     
@@ -232,41 +193,7 @@ testthat::test_that( "config.envResolvesWithSSearchEnvarEnabled", {
     testthat::fail( "Could not stage APP_HOME" )
   
   
-  # - stage cxapp in .libPaths()
-  
-  prev_libpath <- .libPaths()
-  
-  on.exit({
-    .libPaths( prev_libpath )
-  }, add = TRUE )
-  
-  
-  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage cxapp libpath directory" )
-  
-  
-  .libPaths( append( test_libpath, .libPaths() ) )
-  
-  
-  
-  # - current working directory
-  
-  prev_wd <- base::getwd()
-  
-  on.exit({
-    base::setwd( prev_wd )
-  }, add = TRUE)
-  
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage working directory" )
-  
-  base::setwd( test_wd )
-  
+
   
   # -- test properties
   
@@ -282,9 +209,7 @@ testthat::test_that( "config.envResolvesWithSSearchEnvarEnabled", {
   # - search tree
   
   test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
-                       test_apphome, 
-                       file.path( test_libpath, "cxapp", fsep = "/"),
-                       test_wd )
+                       test_apphome )
   
   
   # - stage property files
@@ -387,10 +312,9 @@ testthat::test_that( "config.envUnsetWithSSearchEnvarDisabled", {
   
   # - APP_HOME
   
-  #   note: case insensitive matching of APP_HOME
-  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
-                              unset = NA,
-                              names = TRUE )
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
   on.exit({
     
@@ -415,42 +339,7 @@ testthat::test_that( "config.envUnsetWithSSearchEnvarDisabled", {
     testthat::fail( "Could not stage APP_HOME" )
   
   
-  # - stage cxapp in .libPaths()
-  
-  prev_libpath <- .libPaths()
-  
-  on.exit({
-    .libPaths( prev_libpath )
-  }, add = TRUE )
-  
-  
-  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage cxapp libpath directory" )
-  
-  
-  .libPaths( append( test_libpath, .libPaths() ) )
-  
-  
-  
-  # - current working directory
-  
-  prev_wd <- base::getwd()
-  
-  on.exit({
-    base::setwd( prev_wd )
-  }, add = TRUE)
-  
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage working directory" )
-  
-  base::setwd( test_wd )
-  
-  
+
   # -- test properties
   
   test_properties <- replicate( base::sample( 1:20, 1), 
@@ -465,9 +354,7 @@ testthat::test_that( "config.envUnsetWithSSearchEnvarDisabled", {
   # - search tree
   
   test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
-                       test_apphome, 
-                       file.path( test_libpath, "cxapp", fsep = "/"),
-                       test_wd )
+                       test_apphome )
   
   
   # - stage property files
@@ -569,10 +456,9 @@ testthat::test_that( "config.envRedirectWithEnvExists", {
   
   # - APP_HOME
   
-  #   note: case insensitive matching of APP_HOME
-  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
-                              unset = NA,
-                              names = TRUE )
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
   on.exit({
     
@@ -595,42 +481,6 @@ testthat::test_that( "config.envRedirectWithEnvExists", {
   
   if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
     testthat::fail( "Could not stage APP_HOME" )
-  
-  
-  # - stage cxapp in .libPaths()
-  
-  prev_libpath <- .libPaths()
-  
-  on.exit({
-    .libPaths( prev_libpath )
-  }, add = TRUE )
-  
-  
-  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage cxapp libpath directory" )
-  
-  
-  .libPaths( append( test_libpath, .libPaths() ) )
-  
-  
-  
-  # - current working directory
-  
-  prev_wd <- base::getwd()
-  
-  on.exit({
-    base::setwd( prev_wd )
-  }, add = TRUE)
-  
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage working directory" )
-  
-  base::setwd( test_wd )
   
   
   
@@ -683,9 +533,7 @@ testthat::test_that( "config.envRedirectWithEnvExists", {
   # - search tree
   
   test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
-                       test_apphome, 
-                       file.path( test_libpath, "cxapp", fsep = "/"),
-                       test_wd )
+                       test_apphome )
   
   
   # - stage property files
@@ -766,10 +614,9 @@ testthat::test_that( "config.envRedirectWithEnvNotExists", {
   
   # - APP_HOME
   
-  #   note: case insensitive matching of APP_HOME
-  prev_apphome <- Sys.getenv( base::names(Sys.getenv())[ match( "APP_HOME", base::toupper(base::names(Sys.getenv())) ) ], 
-                              unset = NA,
-                              names = TRUE )
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
   on.exit({
     
@@ -792,42 +639,6 @@ testthat::test_that( "config.envRedirectWithEnvNotExists", {
   
   if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
     testthat::fail( "Could not stage APP_HOME" )
-  
-  
-  # - stage cxapp in .libPaths()
-  
-  prev_libpath <- .libPaths()
-  
-  on.exit({
-    .libPaths( prev_libpath )
-  }, add = TRUE )
-  
-  
-  test_libpath <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-libpath-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( file.path( test_libpath, "cxapp", fsep = "/" ) ) && ! dir.create( file.path( test_libpath, "cxapp", fsep = "/" ), recursive = TRUE ) )
-    testthat::fail( "Could not stage cxapp libpath directory" )
-  
-  
-  .libPaths( append( test_libpath, .libPaths() ) )
-  
-  
-  
-  # - current working directory
-  
-  prev_wd <- base::getwd()
-  
-  on.exit({
-    base::setwd( prev_wd )
-  }, add = TRUE)
-  
-  
-  test_wd <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-wd-", tmpdir = test_root, fileext = "" ) )
-  
-  if ( ! dir.exists( test_wd ) && ! dir.create( test_wd, recursive = TRUE ) )
-    testthat::fail( "Could not stage working directory" )
-  
-  base::setwd( test_wd )
   
   
   
@@ -888,9 +699,7 @@ testthat::test_that( "config.envRedirectWithEnvNotExists", {
   # - search tree
   
   test_srchtree <-  c( file.path( test_apphome, "config", fsep = "/" ), 
-                       test_apphome, 
-                       file.path( test_libpath, "cxapp", fsep = "/"),
-                       test_wd )
+                       test_apphome )
   
   
   # - stage property files

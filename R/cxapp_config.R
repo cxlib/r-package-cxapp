@@ -14,27 +14,16 @@
 #' contains the characters a-z and digits 0-9 and the file extension 
 #' `properties`. 
 #' 
-#' Property files are searched in the following sequence of directories (search
-#' tree).
-#' 
-#' \itemize{
-#'   \item Directory `$APP_HOME/config`, if the `APP_HOME` environmental variable
-#'         is defined
-#'   \item Directory `$APP_HOME`, if the `APP_HOME` environmental variable is
-#'         defined
-#'   \item The cxapp package install directory in the library tree 
-#'         (\link[base]{.libPaths})
-#'   \item Current working directory (\link[base]{getwd})
-#' }
-#' 
-#' If `APP_HOME` environmental variable is a list of paths, each path is added 
-#' to search tree in the sequence specified.
+#' Property files are imported from the app home directory 
+#' (\link[cxapp]{cxapp_apphome}) starting with the `config` sub-directory
+#' followed by the app home directory itself, also referred to as the search
+#' tree.
 #' 
 #' The class initialization first searches for and imports properties from the
-#' file `app.properties` in the search tree and then process each additional 
-#' property file in natural sort order. If a property file exists in multiple
-#' search locations and `recursive = FALSE`, the first occurrence is used and
-#' the remaining property file locations are ignored.
+#' file `app.properties` and then process each additional property file in 
+#' natural sort order in the search tree. If a property file with the same base
+#' name exists in multiple locations of the search tree, the first occurrence
+#' will be imported and subsequent files ignored.
 #' 
 #' Property file syntax and conventions, including property naming conventions, 
 #' are specified in the help reference for function
@@ -42,7 +31,7 @@
 #' 
 #' Configuration property is referred to by the `<property>` name, case
 #' insensitive. If `<property>` is defined in more than one property file, the 
-#' `<property>` the value will refer to the first occurrence of the property 
+#' `<property>` value will refer to the first occurrence of the property 
 #' definition as determined by the property file search sequence. 
 #' 
 #' If class initialization `cached = TRUE` (default), the in-memory cached 
@@ -51,13 +40,20 @@
 #' `.cxapp.wrkcache.config` in the R session global environment 
 #' \link[base]{.GlobalEnv}.
 #' 
-#' Note that `cached = FALSE` will update the existing cache after the property 
-#' files are imported following the convention that static configuration 
-#' (property files) takes precedence over dynamic configuration.
+#' When `cached = FALSE`, the existing in-memory cached configuration will be
+#' ignored and the returned configuration is imported from property files.
+#'  
+#' All cached configuration properties are created or overwritten (not amended)
+#' every time property files are imported when `reset.cached = TRUE`, regardless
+#' of the value of `cached`.
 #' 
-#' All cached configuration properties are reset (not amended) every time 
-#' property files are imported regardless of the value of `cached`.
+#' Note that `cached = FALSE` and `reset.cache = FALSE` may result in the 
+#' cached in-memory configuration being out of sync with the expected
+#' configuration as set through property files.
 #' 
+#' There is currently no configuration option available to centrally disable the
+#' in-memory cached configuration. 
+#'  
 #' The `option()` method returns the value of property `x`, if it exists. If `x`
 #' is a character vector of property names, the value of the first existing 
 #' property option from the specified sequence of names is returned. 
@@ -98,7 +94,7 @@ cxapp_config <- methods::setRefClass( "cxapp_config",
                                       fields = list( ".attr" = "list" ) )
 
 
-cxapp_config$methods( "initialize" = function( cached = TRUE, recursive = TRUE ) {
+cxapp_config$methods( "initialize" = function( cached = TRUE, reset.cache = TRUE ) {
   "Initialize"
 
   
@@ -130,55 +126,16 @@ cxapp_config$methods( "initialize" = function( cached = TRUE, recursive = TRUE )
   }
 
     
-  
-  
-  
+
   # -- property files to load
 
-  #   directory search tree for *.properties
-  srch_lst <- character(0)
-
+  # - search tree for *.properties
   
-  # - APP_HOME environment
+  app_home <- cxapp::cxapp_apphome()
   
-  if ( "APP_HOME" %in% base::toupper(names(Sys.getenv())) ) {
+  srch_lst <- c( file.path( app_home, "config", fsep = "/"),
+                 app_home )
 
-    # case insensitive matching     
-    env_names <- base::names(Sys.getenv())
-
-    if ( length(env_names[ base::toupper(env_names) %in% "APP_HOME" ]) != 1 )
-      stop( "Multiple instances of APP_HOME environmental variable identified when case ignored" )
-    
-    app_home_env <- Sys.getenv( env_names[ match( "APP_HOME", base::toupper(env_names) ) ] )
-    
-    srch_lst <- append( srch_lst, 
-                         sapply( base::unlist( base::strsplit( app_home_env, .Platform$path.sep, fixed = TRUE), use.names = FALSE ), 
-                                 function(x) {
-                                   cxapp::cxapp_standardpath( c( file.path( x, "config", fsep = "/"), x ) ) 
-                                 } ) )
-
-  }  # end of if-statement for APP_HOME
-  
-  
-  # - cxapp install directory in library tree
-  
-  if ( "cxapp" %in% list.dirs( .libPaths(), recursive = FALSE, full.names = FALSE ) ) {
-
-    # note: list.dirs( .libPaths(), ... ) does not preserve the order of .libPaths()
-    lb_paths <- base::unlist( lapply( .libPaths(), function(x) {
-      cxapp::cxapp_standardpath( list.dirs( x, recursive = FALSE, full.names = TRUE ) )
-    }), use.names = FALSE )
-    
-
-    srch_lst <- append( srch_lst, 
-                        utils::head( lb_paths[ base::basename(lb_paths) == "cxapp" ], n = 1 ) )
-    
-  }
-  
-
-  # - current working directory
-  srch_lst <- append( srch_lst, cxapp::cxapp_standardpath( base::getwd() ) )
-  
   
   # - add search tree to internal references
   .self$.attr[["search.tree"]] <- srch_lst[ dir.exists(srch_lst) ]
@@ -196,14 +153,13 @@ cxapp_config$methods( "initialize" = function( cached = TRUE, recursive = TRUE )
 
     
     # deal with app.properties precedence
-    # using unique() later to clean out duplicate paths
     if ( "app.properties" %in% base::basename(base::tolower(xpath_propfiles)) &&
-         ( recursive || ( length(app_propfiles) == 0 ) ) )
-      prop_files <- append( prop_files, file.path( xpath, "app.properties", fsep = "/" ) )
-
-    
+         ! "app.properties" %in% base::basename(base::tolower(prop_files)) )
+      prop_files <- append( file.path( xpath, "app.properties", fsep = "/" ), prop_files )
+         
+    # process each file in turn .. note basename() check
     for ( xfile in xpath_propfiles ) 
-      if ( recursive || ! base::basename(xfile) %in% base::basename(prop_files) )
+      if ( ! base::basename(xfile) %in% base::basename(prop_files) )
         prop_files <- append( prop_files, xfile ) 
 
   }  #  end of for-statement across each directory in search tree  
@@ -238,7 +194,8 @@ cxapp_config$methods( "initialize" = function( cached = TRUE, recursive = TRUE )
   
   # -- update cache
   #    note: we always do this .. makes cached = TRUE work
-  base::assign( ".cxapp.wrkcache.config", .self$.attr, envir = base::.GlobalEnv )
+  if ( reset.cache )
+    base::assign( ".cxapp.wrkcache.config", .self$.attr, envir = base::.GlobalEnv )
 
 })
 

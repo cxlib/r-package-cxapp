@@ -9,8 +9,12 @@
 
 
 
+#' @cx.testsfor cxapp::cxapp_config()
+
 
 testthat::test_that( "config.propertyRedirectVaultSecretTag", {
+  
+  #' @cx.tests Property value returned is value of a vault sercret when property value references the vault secret and the vault secret exists
   
   # -- stage
   
@@ -24,46 +28,60 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
     testthat::fail("Could not create test area")
   
   
-  # - move global in-memory cached config
   
-  prev_config <- NA
+  # - APP_HOME
   
-  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
-  on.exit( {
+  on.exit({
     
-    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-    
-    if ( inherits( prev_config, "cxapp_config" ) )
-      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
     
   }, add = TRUE )
   
   
-  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-  
-  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    testthat::fail( "Could not stash app config" )
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
   
   
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
   
   
-  # update .libPaths
   
-  current_libpaths <- .libPaths()
   
-  on.exit( {
-    .libPaths( current_libpaths )
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
   }, add = TRUE )
   
-  .libPaths( c( test_root, .libPaths() ) )
   
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )  
   
+
   
-  # stage vault
+  # - stage vault
   
   test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
@@ -96,16 +114,13 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
   test_secret_ref <- paste0( "/", utils::tail( test_secrets, n = 1 ) )
   
 
-  # test property 
+  # - test property 
   test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
   test_reference_propfile_value <- paste0( "[vault]", test_secret_ref )
   
 
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
   
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
+  # - stage property file
   
   base::writeLines( c( "# test properties file", 
                        "# -- vault configuration",
@@ -113,9 +128,9 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
                        paste0( "VAULT.DATA = ", test_vault_path ),
                        "# -- property",
                        paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
+                    con = file.path( test_apphome, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+  if ( ! file.exists( file.path( test_apphome, "app.properties", fsep = "/") ) )
     testthat::fail( "Could not stage app.properties" )
 
   
@@ -145,6 +160,9 @@ testthat::test_that( "config.propertyRedirectVaultSecretTag", {
 
 testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
   
+  #' @cx.tests Property value returned is value of unset when property value references a vault secret and the vault secret does not exist
+  
+  
   # -- stage
   
   test_root <- cxapp::cxapp_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "") )
@@ -157,47 +175,59 @@ testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
     testthat::fail("Could not create test area")
   
   
+  # - APP_HOME
   
-  # - move global in-memory cached config
+  #   note: align with cxapp_apphome()
+  #   note: precedence of APP_HOME all caps
+  prev_apphome <- Sys.getenv( "APP_HOME", unset = NA, names = TRUE )
   
-  prev_config <- NA
-  
-  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    prev_config <- get( ".cxapp.wrkcache.config", envir = .GlobalEnv )
-  
-  on.exit( {
+  on.exit({
     
-    if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-      base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-    
-    if ( inherits( prev_config, "cxapp_config" ) )
-      base::assign( ".cxapp.wrkcache.config", prev_config, envir = .GlobalEnv )
+    if ( ! is.na( prev_apphome ) )
+      do.call( Sys.setenv, as.list(prev_apphome) )
     
   }, add = TRUE )
   
   
-  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    base::rm( list = ".cxapp.wrkcache.config", envir = .GlobalEnv )
-  
-  if ( exists( ".cxapp.wrkcache.config", envir = .GlobalEnv ) )
-    testthat::fail( "Could not stash app config" )
+  if ( ! is.na( prev_apphome ) )
+    Sys.unsetenv( base::names(prev_apphome))
   
   
+  test_apphome <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-app-home-", tmpdir = test_root, fileext = "" ) )
+  
+  if ( ! dir.exists( file.path( test_apphome, "config", fsep = "/" ) ) && ! dir.create( file.path( test_apphome, "config", fsep = "/" ), recursive = TRUE ) )
+    testthat::fail( "Could not stage APP_HOME directory" )
+  
+  Sys.setenv( "APP_HOME" = test_apphome )
+  
+  if ( is.na(Sys.getenv("APP_HOME", unset = NA ) ) )
+    testthat::fail( "Could not stage APP_HOME" )
   
   
-  # update .libPaths
   
-  current_libpaths <- .libPaths()
   
-  on.exit( {
-    .libPaths( current_libpaths )
+  # - cached config
+  
+  prev_cachedconfig <- NA
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    prev_cachedconfig <- base::get( ".cxapp.wrkcache.config", envir = base::.GlobalEnv )
+  
+  on.exit({
+    
+    # note: the cached content is .self$.attr of cxapp::cxapp_config() 
+    if ( inherits( prev_cachedconfig, "list") ) 
+      base::assign( ".cxapp.wrkcache.config", prev_cachedconfig, envir = base::.GlobalEnv )
+    
   }, add = TRUE )
   
-  .libPaths( c( test_root, .libPaths() ) )
+  
+  if ( base::exists( ".cxapp.wrkcache.config", envir = base::.GlobalEnv ) )
+    base::rm( list = ".cxapp.wrkcache.config", envir = base::.GlobalEnv )  
   
   
   
-  # stage vault
+  # - stage vault
   
   test_vault_path <- cxapp::cxapp_standardpath( base::tempfile( pattern = "test-vault-", tmpdir = test_root, fileext = "" ) )
   
@@ -231,26 +261,22 @@ testthat::test_that( "config.propertyRedirectVaultSecretTagSecretNotExist", {
   test_secret_ref <- paste0( "/", utils::tail( test_secrets, n = 1 ) )
   
   
-  # test property 
+  # - test property 
   test_reference_name <- base::toupper( paste( base::sample( c( base::LETTERS, base::letters, as.character(0:9)), 15 ), collapse = "" ) )
   test_reference_propfile_value <- paste0( "[vault]", test_secret_ref )
   
   
-  # inject cxapp properties file in .libPaths
-  test_cxapp_path <- file.path( test_root, "cxapp", fsep = "/" )
-  
-  if ( ! dir.exists( test_cxapp_path ) && ! dir.create( test_cxapp_path, recursive = TRUE ) )
-    testthat::fail("Could not stage cxapp in test area")
-  
+  # - test property file
+
   base::writeLines( c( "# test properties file", 
                        "# -- vault configuration",
                        "VAULT = LOCAL", 
                        paste0( "VAULT.DATA = ", test_vault_path ),
                        "# -- property",
                        paste( test_reference_name, test_reference_propfile_value, sep = "=" ) ),
-                    con = file.path( test_cxapp_path, "app.properties", fsep = "/") )
+                    con = file.path( test_apphome, "app.properties", fsep = "/") )
   
-  if ( ! file.exists( file.path( test_cxapp_path, "app.properties", fsep = "/") ) )
+  if ( ! file.exists( file.path( test_apphome, "app.properties", fsep = "/") ) )
     testthat::fail( "Could not stage app.properties" )
   
 
