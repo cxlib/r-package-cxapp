@@ -14,14 +14,15 @@
 #' The application cache is a normalized file caching utility. An item is 
 #' referenced by a path syntax that maps to the item. 
 #' 
-#' The location of the cache is set by the configuration option `APPCACHE.PATH` in 
-#' `app.properties`. If `APPCACHE.PATH` is not defined, the `.cache` sub-directory  
-#' in the temporary directory \link[base]{tempdir} for the current R session is 
-#' used.
+#' The location of the cache is set by the configuration option `APP.CACHE.PATH` 
+#' in `app.properties`. If `APP.CACHE.PATH` is not defined, a transient 
+#' application cache directory `.application-cache-<node>` is created in the R
+#' session temporary directory \link[base]{tempdir}. The `<node>` is the node 
+#' name returned by \link[cxapp]{cxapp_nodename}.
 #' 
 #' The `add(x)` method will add the specified `file` to the cache using `x` as a 
 #' reference. The time to expire for the item in the cache is defined using 
-#' the configuration option `APPCACHE.EXPIRE` in minutes. If the expire duration 
+#' the configuration option `APP.CACHE.EXPIRE` in minutes. If the expire duration 
 #' is updated, the duration in effect when the item was add or last touched is
 #' used.
 #' 
@@ -30,15 +31,20 @@
 #' (`FALSE`). An object exists in the cache if it physically exists and the 
 #' object has not expired in the cache.
 #' 
-#' The `get(x)` method returns the path to the referenced object in the cache. Note
-#' that the preference and the path is not the same. The returned path does not 
-#' preserve directory structure, file names or file extension. 
+#' The `get` method retrieves an object `x` from the application cache. Default
+#' functionality is to copy (`clone = TRUE`) the object into the R session 
+#' temporary directory \link[base]{tempdir} with a generic file name. If 
+#' `clone = FALSE`, the method returns the path to the object in the cache.
+#' 
+#' \emph{Note}: Using `get` method with `clone = FALSE` does not protect the 
+#' content in the cache from read and write locking and should only be used in 
+#' cases where the surrounding process is well established and robust.
 #' 
 #' The `drop(x)` method drops (deletes) an object from the cache.
 #' 
 #' The `touch(x)` method will reset the date and time for an object to expire in 
 #' the cache. The new date and time of expiration is derived from the current
-#' value of the configuration option `APPCACHE.EXPIRE`.
+#' value of the configuration option `APP.CACHE.EXPIRE`.
 #' 
 #' The `purge()` method deletes all objects in the cache.
 #' 
@@ -61,14 +67,19 @@ cxapp_applicationcache$methods( "initialize" = function() {
   
   
   # -- cache directory
-  
-  cache_root <- cxapp::cxapp_standardpath( cxapp::cxapp_config()$option( "appcache.path", unset = NA, use.names = FALSE) )
-  
+  cache_root <- cxapp::cxapp_standardpath( cxapp::cxapp_config()$option( "app.cache.path", unset = NA, use.names = FALSE) )
+
+  # -- not configured  
   if ( is.na( cache_root) ) {
 
-    # - force temporary directory uniqueness    
-    cache_root <- cxapp::cxapp_standardpath( base::tempfile(".application-cache-", tmpdir = base::tempdir(), fileext = "" ) )
+    # - temporary cache
+    #   note: use app node
+    #   note: app node is a random transient string assigned at first call to cxapp_appnode() for the current R session
+    cache_root <- cxapp::cxapp_standardpath( file.path( base::tempdir(), 
+                                                        paste0( ".application-cache-", cxapp::cxapp_appnode()),
+                                                        fsep = "/" ) )
     
+
     if ( ! dir.exists(cache_root) && ! dir.create( cache_root, recursive = TRUE ) )
       stop( "Could not create temporary root directory for cache" )
      
@@ -138,10 +149,10 @@ cxapp_applicationcache$methods( "add" = function( x ) {
 
   # -- derive TTL/expire
   
-  expire_minutes <- try( as.integer(cxapp::cxapp_config()$option( "appcache.expire", unset = 1440 )), silent = TRUE )
+  expire_minutes <- try( as.integer(cxapp::cxapp_config()$option( "app.cache.expire", unset = 1440 )), silent = TRUE )
   
   if ( inherits( expire_minutes, "try-error" ) )
-    stop( "Configuration error in that APPCACHE.EXPIRE is not an integer" )
+    stop( "Configuration error in that APP.CACHE.EXPIRE is not an integer" )
   
   
   expire_str <- base::format(  base::as.POSIXct( Sys.time() + 60*expire_minutes, tx = "UTC" ), format = "%Y%m%d-%H%M" )
@@ -311,7 +322,7 @@ cxapp_applicationcache$methods( "exists" = function(x) {
 
 
 
-cxapp_applicationcache$methods( "get" = function(x) {
+cxapp_applicationcache$methods( "get" = function(x, clone = TRUE ) {
   "Get the path to the referenced item in cache"
 
   
@@ -322,18 +333,28 @@ cxapp_applicationcache$methods( "get" = function(x) {
     stop( "File does not exist in cache")
   
 
-  # -- reference
+  # -- cache reference
   objref <- digest::digest( base::tolower(base::trimws(x)), algo = "sha1", file = FALSE )
-  
-  
+
   objpath <- file.path( .self$.attr[["cache.path"]], objref, fsep = "/" )
-  
+
   if ( ! file.exists( objpath ) )
     stop( "Object not found in cache" )
   
-    
-  return(invisible(objpath))
+
+  # -- do not clone file
+  if ( ! clone )
+    return(invisible(objpath))
   
+  
+  # -- clone 
+  clonepath <- cxlib::cxlib_standardpath( base::tempfile( pattern = "", tmpdir = base::tempdir(), fileext = "" ) )
+  
+  if ( file.exists( clonepath ) || 
+       ! file.copy( objpath, clonepath ) )
+    stop( "Could not clone cached entry" )
+  
+  return(invisible(clonepath))
 })
 
 
@@ -385,10 +406,10 @@ cxapp_applicationcache$methods( "touch" = function(x) {
   
   
   # -- derive TTL/expire
-  expire_minutes <- try( as.integer(cxapp::cxapp_config()$option( "appcache.expire", unset = 1440 )), silent = TRUE )
+  expire_minutes <- try( as.integer(cxapp::cxapp_config()$option( "app.cache.expire", unset = 1440 )), silent = TRUE )
   
   if ( inherits( expire_minutes, "try-error" ) )
-    stop( "Configuration error in that APPCACHE.EXPIRE is not an integer" )
+    stop( "Configuration error in that APP.CACHE.EXPIRE is not an integer" )
 
   expire_str <- base::format(  base::as.POSIXct( Sys.time() + 60*expire_minutes, tx = "UTC" ), format = "%Y%m%d-%H%M" )
   
@@ -434,7 +455,7 @@ cxapp_applicationcache$methods( "show" = function() {
   
 
   # -- add expire duration setting
-  info <- append( info, paste( "Object time to expire (minutes)    ", cxapp::cxapp_config()$option( "appcache.expire", unset = 1440 ) ),)
+  info <- append( info, paste( "Object time to expire (minutes)    ", cxapp::cxapp_config()$option( "app.cache.expire", unset = 1440 ) ),)
   
   
   # -- add number of objects
