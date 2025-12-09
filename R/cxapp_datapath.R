@@ -1,19 +1,20 @@
 #' Utility function to get the path in the data area
 #' 
-#' @param ... Vector of path elements
+#' @param ... Path elements
 #' 
 #' @return A vector of length one with the path 
 #' 
 #' @description
-#' The utility function `cxapp_datapath()` is synonymous with the function
+#' The utility function `cxapp_datapath` is synonymous with the function
 #' \link[base]{file.path}.
 #' 
-#' The root of the data path is defined in the cxapp property `DATA`. The first 
-#' path in `DATA` that exists is the root of the returned path. If no specified 
-#' paths exists, the first specified path is used.
+#' The root of the data path is defined with the app property `APP.DATA`. If 
+#' `APP.DATA` is not defined, If `APP.DATA` is not defined, a transient 
+#' application cache directory `.application-data-<node>` is created in the R
+#' session temporary directory \link[base]{tempdir}. 
 #' 
-#' If the `DATA` property is not defined, the function returns the path equal to
-#' that of \link[base]{file.path}.
+#' The arguments in the call to the function `cxapp_datapath` are passed to
+#' \link[base]{file.path}.  
 #' 
 #' 
 #' @export
@@ -26,33 +27,47 @@ cxapp_datapath <- function( ... ) {
   # fxargs <- unlist(list( ... ), use.names = FALSE)
   fxargs <- list( ... )
 
+  
+  # -- path arguments
+  fpath_args <- fxargs
+  fpath_args[["fsep"]] <- "/"  # force delimiter
+  
 
-  # -- define root path
-  xroot <- character(0)
-
+  # -- configuration
   cfg <- cxapp::cxapp_config()
-
-  if ( ! is.na(cfg$option( "DATA", unset = NA )) ) {
-    xpaths <- base::unlist( base::strsplit( cfg$option("DATA"), .Platform$path.sep, fixed = TRUE ) )
-   
-    # if any directory in xpaths exists ... use the first existing
-    # if no directory in xpaths exists ... use the first specified
-    xroot <- ifelse( any(dir.exists( xpaths )), 
-                     utils::head( xpaths[ dir.exists(xpaths) ], n = 1 ),
-                     utils::head( xpaths, n = 1 ) )
+  
+  
+  # -- default root path
+  xroot <- cfg$option( "APP.DATA", unset = NA )
+  
+  if ( is.na(xroot) ) {
+    
+    # - transient root directory
+    xroot <- cxapp::cxapp_standardpath( file.path( base::tempdir(), paste0( ".application-data-", cxapp::cxapp_appnode() ), fsep = "/" ) )
+    
+    if ( ! dir.exists(xroot) && ! dir.create( xroot, recursive = TRUE ) )
+      stop( "Could not create transient data path directory" )
     
   }
 
+  if ( ! dir.exists( xroot ) )
+    stop( "The data path directory or its parent does not exist" )
+  
+  
+  # -- no arguments .. return xroot as data path
+  if ( length(fpath_args) == 0 )
+    return(invisible( cxapp::cxapp_standardpath( xroot ) ))
+  
 
-  # -- generate path 
-  fpath_args <- append( as.list(xroot), fxargs)
-  fpath_args[["fsep"]] <- "/"
+  # - inject root path at the start of args
+  fpath_args <- append( xroot, fpath_args )
 
+  # -- derive full datapath
   data_path <-  do.call( base::file.path, fpath_args)
           
   
   # -- return
-  return( cxapp::cxapp_standardpath( data_path ) )
+  return(invisible( cxapp::cxapp_standardpath( data_path ) ))
 }
 
 
