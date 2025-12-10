@@ -10,16 +10,16 @@
 #' The `cxapp_log` function logs messages in specified order prefixed with the current 
 #' date and time. 
 #' 
-#' The log file parent directory path is defined by the `LOG.PATH` cxapp property. If
+#' The log file parent directory path is defined by the `APP.LOG.PATH` cxapp property. If
 #' `LOG.PATH` is not defined log messages are written to the console. 
 #' 
-#' The `LOG.NAME` option specifies the basis for the log file name. Any log file 
+#' The `APP.LOG.NAME` option specifies the basis for the log file name. Any log file 
 #' name parts associated with log rotation is appended to the log file base name 
-#' separated by an underscore (`_`). Log file names end in the file extension `log`.
+#' separated by a dash (`-`). Log file names end in the file extension `log`.
 #' 
-#' If `LOG.NAME` is not defined, the log file name is `app.log`.
+#' If `APP.LOG.NAME` is not defined, the log file name is `app.log`.
 #' 
-#' The `LOG.ROTATION` cxapp property defines the log file rotation. Valid rotations
+#' The `APP.LOG.ROTATION` cxapp property defines the log file rotation. Valid rotations
 #' are `YEAR`, `MONTH` and `DAY`. The log rotation follows the format four digit
 #' year and two digit month and day.  
 #' 
@@ -64,19 +64,19 @@ cxapp_log <- function( x, attr = NULL, echo = base::interactive() ) {
 
   
   # -- echo mode ... send to console  
-  if ( echo || is.na( cfg$option( "LOG.PATH", unset = NA ) ) ) 
+  if ( echo || is.na( cfg$option( "APP.LOG.PATH", unset = NA ) ) ) 
     base::cat( msgs , sep = "\n")
     
   
   # -- no log configuration  
-  if ( is.na( cfg$option( "LOG.PATH", unset = NA ) ) ) 
+  if ( is.na( cfg$option( "APP.LOG.PATH", unset = NA ) ) ) 
     return(invisible(msgs))
 
   
   
   # -- log file
 
-  log_dir <- cxapp::cxapp_standardpath( cfg$option( "LOG.PATH" ) )
+  log_dir <- cxapp::cxapp_standardpath( cfg$option( "APP.LOG.PATH" ) )
   
   if ( ! dir.exists( log_dir ) )
     stop( "Log directory ", log_dir, " does not exist" )
@@ -88,13 +88,13 @@ cxapp_log <- function( x, attr = NULL, echo = base::interactive() ) {
   log_rotations <- c( "year" = "%Y", "month" = "%Y%m", "day" = "%Y%m%d" )
   
 
-  if ( ! is.na( cfg$option( "LOG.ROTATION", unset = NA ) ) ) {
+  if ( ! is.na( cfg$option( "APP.LOG.ROTATION", unset = NA ) ) ) {
     
-    if ( ! base::tolower(cfg$option( "LOG.ROTATION" )) %in% names(log_rotations) )
-      stop( "Log rotation ", cfg$option( "LOG.ROTATION" ), " not known")
+    if ( ! base::tolower(cfg$option( "APP.LOG.ROTATION" )) %in% names(log_rotations) )
+      stop( "Log rotation ", cfg$option( "APP.LOG.ROTATION" ), " not known")
     
     log_file_name <- append( log_file_name, 
-                             base::format( base::as.POSIXlt(base::Sys.time(), tz = "UTC"), format = log_rotations[ base::tolower(cfg$option( "LOG.ROTATION" )) ] ) )
+                             base::format( base::as.POSIXlt(base::Sys.time(), tz = "UTC"), format = log_rotations[ base::tolower(cfg$option( "APP.LOG.ROTATION" )) ] ) )
   }                             
 
   log_file_path <- file.path( log_dir, paste0( paste( log_file_name, collapse = "-"), ".log" ), fsep = "/" )
