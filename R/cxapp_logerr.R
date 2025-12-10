@@ -1,6 +1,6 @@
 #' Simple function to log error messages
 #' 
-#' @param x bject or vector of messages to log
+#' @param x Error object or vector of messages to log
 #' @param echo Enable/Disable output of log messages to console
 #' 
 #' @returns Invisible vector of log messages
@@ -12,16 +12,16 @@
 #' If `x` is not a vector, the object is expected to inherit `try-error` 
 #' (see \link[base]{try}).
 #' 
-#' The log file parent directory path is defined by the `LOG.PATH` cxapp property. If
-#' `LOG.PATH` is not defined log messages are written to the console. 
+#' The log file parent directory path is defined by the `APP.LOG.PATH` cxapp property. If
+#' `APP.LOG.PATH` is not defined log messages are written to the console. 
 #' 
-#' The `LOG.NAME` option specifies the basis for the log and error log file names.
+#' The `APP.LOG.NAME` option specifies the basis for the log and error log file names.
 #' Any log file name parts associated with log rotation is appended to the log file base name 
-#' separated by an underscore (`_`). Error log file names end in the file extension `err`.
+#' separated by a dash (`-`). Error log file names end in the file extension `err`.
 #' 
-#' If `LOG.NAME` is not defined, the log file name is `app.err`.
+#' If `APP.LOG.NAME` is not defined, the log file name is `app.err`.
 #' 
-#' The `LOG.ROTATION` cxapp property defines the log file rotation. Valid rotations
+#' The `APP.LOG.ROTATION` cxapp property defines the log file rotation. Valid rotations
 #' are `YEAR`, `MONTH` and `DAY`. The log rotation follows the format four digit
 #' year and two digit month and day.  
 #' 
@@ -93,37 +93,37 @@ cxapp_logerr <- function( x, echo = base::interactive() ) {
   
   
   # -- echo mode ... send to console  
-  if ( echo || is.na( cfg$option( "LOG.PATH", unset = NA ) ) ) 
+  if ( echo || is.na( cfg$option( "APP.LOG.PATH", unset = NA ) ) ) 
     base::cat( msgs , sep = "\n")
   
   
   # -- no log configuration  
-  if ( is.na( cfg$option( "LOG.PATH", unset = NA ) ) ) 
+  if ( is.na( cfg$option( "APP.LOG.PATH", unset = NA ) ) ) 
     return(invisible(msgs))
   
   
   
   # -- log file
   
-  log_dir <- cxapp::cxapp_standardpath( cfg$option( "LOG.PATH" ) )
+  log_dir <- cxapp::cxapp_standardpath( cfg$option( "APP.LOG.PATH" ) )
   
   if ( ! dir.exists( log_dir ) )
     stop( "Log directory ", log_dir, " does not exist" )
   
   
-  log_file_name <- cfg$option( "LOG.NAME", unset = "app")
+  log_file_name <- cfg$option( "APP.LOG.NAME", unset = "app")
   
   #    note: known log rotations
   log_rotations <- c( "year" = "%Y", "month" = "%Y%m", "day" = "%Y%m%d" )
   
   
-  if ( ! is.na( cfg$option( "LOG.ROTATION", unset = NA ) ) ) {
+  if ( ! is.na( cfg$option( "APP.LOG.ROTATION", unset = NA ) ) ) {
     
-    if ( ! base::tolower(cfg$option( "LOG.ROTATION" )) %in% names(log_rotations) )
-      stop( "Log rotation ", cfg$option( "LOG.ROTATION" ), " not known")
+    if ( ! base::tolower(cfg$option( "APP.LOG.ROTATION" )) %in% names(log_rotations) )
+      stop( "Log rotation ", cfg$option( "APP.LOG.ROTATION" ), " not known")
     
     log_file_name <- append( log_file_name, 
-                             base::format( base::as.POSIXlt(base::Sys.time(), tz = "UTC"), format = log_rotations[ base::tolower(cfg$option( "LOG.ROTATION" )) ] ) )
+                             base::format( base::as.POSIXlt(base::Sys.time(), tz = "UTC"), format = log_rotations[ base::tolower(cfg$option( "APP.LOG.ROTATION" )) ] ) )
   }                             
   
   log_file_path <- file.path( log_dir, paste0( paste( log_file_name, collapse = "-"), ".err" ), fsep = "/" )
