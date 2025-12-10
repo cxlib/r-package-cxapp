@@ -11,7 +11,7 @@
 #' date and time. 
 #' 
 #' The log file parent directory path is defined by the `APP.LOG.PATH` cxapp property. If
-#' `LOG.PATH` is not defined log messages are written to the console. 
+#' `APP.LOG.PATH` is not defined log messages are written to the console. 
 #' 
 #' The `APP.LOG.NAME` option specifies the basis for the log file name. Any log file 
 #' name parts associated with log rotation is appended to the log file base name 
@@ -82,7 +82,7 @@ cxapp_log <- function( x, attr = NULL, echo = base::interactive() ) {
     stop( "Log directory ", log_dir, " does not exist" )
 
   
-  log_file_name <- cfg$option( "LOG.NAME", unset = "app" )
+  log_file_name <- cfg$option( "APP.LOG.NAME", unset = "app" )
 
   #    note: known log rotations
   log_rotations <- c( "year" = "%Y", "month" = "%Y%m", "day" = "%Y%m%d" )
